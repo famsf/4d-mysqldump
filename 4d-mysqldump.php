@@ -72,8 +72,8 @@ foreach($fourd->getTables() as $table) {
   // If the table is not temporary, locate its columns.
   if ($table['TEMPORARY'] == 1) {
     $columns = $fourd->getColumns($table['TABLE_ID']);
-    //$indexes = $fourd->getIndexes($table['TABLE_ID']);
-
+    $indexes = $fourd->getIndexes($table['TABLE_ID']);
+//print_r($indexes);
     print_table($table, $columns);
     //print_data($table);
 
@@ -90,46 +90,48 @@ foreach($fourd->getTables() as $table) {
  * @todo: Indexes
  */
 function print_table($table, $columns) {
-  print('--' . PHP_EOL);
-  printf('-- Table structure for table `%s`' . PHP_EOL, $table['TABLE_NAME']);
-  print('--' . PHP_EOL);
+  print(PHP_EOL . '--');
+  printf(PHP_EOL . '-- Table structure for table `%s`', $table['TABLE_NAME']);
+  print(PHP_EOL . '--');
   print(PHP_EOL);
-  printf('DROP TABLE IF EXISTS `%s`' . PHP_EOL, $table['TABLE_NAME']);
-  printf('CREATE TABLE `%s` (' . PHP_EOL, $table['TABLE_NAME']);
+  printf(PHP_EOL . 'DROP TABLE IF EXISTS `%s`;', $table['TABLE_NAME']);
+  printf(PHP_EOL . 'CREATE TABLE `%s` (', $table['TABLE_NAME']);
 
+  $first_column = TRUE;
   foreach ($columns as $column) {
+
     // Is set to true if invalid/unhandled data is located.
     $skip_column = FALSE;
     switch($column['DATA_TYPE']) {
       case FOURD_DATA_BOOL: //id:1
-        $column_type = ' BOOL';
+        $column_type = ' bool';
         break;
       case FOURD_DATA_INT_16: //id:3
       case FOURD_DATA_INT_32: //id:4
       case FOURD_DATA_INT_64: //id:5
         // 32/64 Bit isn't really supported in MySQL. I hope this works.
-        $column_type = ' INT';
+        $column_type = ' int';
         break;
       case FOURD_DATA_REAL: //id:6
-        $column_type = ' REAL';
+        $column_type = ' real';
         break;
       case FOURD_DATA_DATETIME: //id:8
-        $column_type = ' DATETIME';
+        $column_type = ' datetime';
         break;
       case FOURD_DATA_TIME: //id:9
-        $column_type = ' TIME';
+        $column_type = ' time';
         break;
       case FOURD_DATA_TEXT: //id:10
         // If $var_length is zero, this is a MySQL TEXT field.
         if ($column['DATA_LENGTH'] == 0) {
-          $column_type = ' TEXT';
+          $column_type = ' text';
         }
         // If $var_length is not zero, this is a VARCHAR.
         else {
           // 4D stores data length as bytes + EOL. To convert to MySQL var
           // length, we minus four and divide by two. (514 - 4)/2 = 255.
           $varchar_length = ($column['DATA_LENGTH'] - 4) / 2;
-          $column_type = sprintf(' VARCHAR(%d)', $varchar_length);
+          $column_type = sprintf(' varchar(%d)', $varchar_length);
         }
         break;
       case FOURD_DATA_PICTURE: //id:12
@@ -145,7 +147,7 @@ function print_table($table, $columns) {
         $skip_column = TRUE;
         break;
       case FOURD_DATA_BLOB:
-        $column_type = ' BLOB';
+        $column_type = ' blob';
         break;
       default:
         // Trigger warning for unknown data types.
@@ -156,22 +158,29 @@ function print_table($table, $columns) {
         break;
     }
 
-    // Unknown/Unhandled columns are skiped
+    // Unknown/Unhandled columns are skipped
     if (!$skip_column) {
+      if (!$first_column) {
+        print(',');
+      }
+      $first_column = FALSE;
+
       // Print the column name
-      printf('  `%s`', $column['COLUMN_NAME']);
+      printf(PHP_EOL . '  `%s`', $column['COLUMN_NAME']);
       // Print the column data type
       print($column_type);
 
-      // If nullable is true, then set NOT NULL.
+      // If nullable is false, then set NOT NULL
+      // NOTE: In 4D
       // @todo: Is this reversed? Seems correct.
       if ($column['NULLABLE'] == 1) {
         print(' NOT NULL');
       }
-      print(',' . PHP_EOL);
+
+
     }
   }
-  print(') ENGINE=InnoDB DEFAULT CHARSET=utf8;' . PHP_EOL);
+  print(PHP_EOL . ') ENGINE=InnoDB DEFAULT CHARSET=utf8;');
 
 }
 
@@ -201,6 +210,10 @@ class FourD {
   }
   function getColumns($table_id) {
     $query = 'SELECT * FROM _USER_COLUMNS WHERE TABLE_ID=' . $table_id . ';';
+    return $this->query($query);
+  }
+  function getIndexes($table_id) {
+    $query = 'SELECT * FROM _USER_INDEXES WHERE TABLE_ID=' . $table_id . ';';
     return $this->query($query);
   }
 
