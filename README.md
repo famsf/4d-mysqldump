@@ -30,3 +30,5 @@ To compile/install PDO_4D in Ubuntu 12.04LTS
     sudo php5enmod pdo_4d
     # Restart apache
     sudo apache2ctl restart
+    # Check for PDO_4D in the PHP CLI Information
+    php -i | grep 4D
