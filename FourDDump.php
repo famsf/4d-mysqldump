@@ -58,20 +58,22 @@ class FourDDump {
 
     // Store the table id/name
     $table->id = $fourd_table['TABLE_ID'];
-    $table->name = $fourd_table['TABLE_NAME'];
+    // Lower case for consistency with column names.
+    $table->name = strtolower($fourd_table['TABLE_NAME']);
 
     $table->columns = array();
 
     foreach ($this->fourd->getColumns($fourd_table['TABLE_ID']) as $fourd_column) {
-      // Check for duplicates
-      //if (isset($table->columns[$fourd_column['COLUMN_NAME']])) {
-
-        //$table->columns[$fourd_column['COLUMN_NAME']] = $table->columns[$fourd_column['COLUMN_NAME']]
-      //}
       $column = $this->parseColumn($fourd_column);
       // If column is valid, store it
       if ($column) {
-        $table->columns[$fourd_column['COLUMN_NAME']] = $column;
+        // If there is a duplicate name, add the id number to the end.
+        if (isset($table->columns[$column->name])) {
+          $column->name .= '-' . $column->id;
+        }
+
+        // Store the column
+        $table->columns[$column->name] = $column;
       }
     }
     //foreach ($this->fourd->getIndexes($fourd_table['TABLE_ID'] as $four_index) {
@@ -85,7 +87,9 @@ class FourDDump {
 
     // Store the column id/name
     $column->id = $fourd_column['COLUMN_ID'];
-    $column->name = $fourd_column['COLUMN_NAME'];
+    // Converting all column names to lowercase because 4D allows duplicate
+    // column names and we need unique names.
+    $column->name = strtolower($fourd_column['COLUMN_NAME']);
 
     switch($fourd_column['DATA_TYPE']) {
       case FOURD_DATA_BOOL: //id:1
