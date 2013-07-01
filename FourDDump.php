@@ -63,8 +63,11 @@ class FourDDump {
     $table->columns = array();
 
     foreach ($this->fourd->getColumns($fourd_table['TABLE_ID']) as $fourd_column) {
-      // @todo: Check for dupes
+      // Check for duplicates
+      //if (isset($table->columns[$fourd_column['COLUMN_NAME']])) {
 
+        //$table->columns[$fourd_column['COLUMN_NAME']] = $table->columns[$fourd_column['COLUMN_NAME']]
+      //}
       $column = $this->parseColumn($fourd_column);
       // If column is valid, store it
       if ($column) {
@@ -72,7 +75,7 @@ class FourDDump {
       }
     }
     //foreach ($this->fourd->getIndexes($fourd_table['TABLE_ID'] as $four_index) {
-      
+
     //}
     return $table;
   }
@@ -155,10 +158,10 @@ class FourDDump {
     print(PHP_EOL);
     printf(PHP_EOL . 'DROP TABLE IF EXISTS `%s`;', $table->name);
     printf(PHP_EOL . 'CREATE TABLE `%s` (', $table->name);
-    
+
     // An array to store each line of the column/key data
     $lines = array();
-    
+
     // Loop through each column
     foreach ($table->columns as $column) {
       // Prep data for output
@@ -166,7 +169,7 @@ class FourDDump {
       // Create the lines
       $lines[] = sprintf(PHP_EOL . '  `%s` %s %s', $column->name, $column->type, $null);
     }
-    
+
     $print_lines = implode(',', $lines);
     print($print_lines);
 
