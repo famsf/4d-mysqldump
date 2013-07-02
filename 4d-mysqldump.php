@@ -8,8 +8,9 @@
  * The PDO_4D PHP extension is required: http://www.php.net/manual/en/ref.pdo-4d.php
  *
  * @todo Load h/u/p from ~/.4d.conf
- * @todo Separate creating data from printing data.
  * @todo Add -t option to specify table names
+ * @todo Implement Foreign Keys.
+ * @todo Support Subtable relationships: http://doc.4d.com/4D-Language-Reference-12.4/Subrecords/Get-subrecord-key.301-977448.en.html
  * @see http://doc.4d.com/4D-SQL-Reference-12.1/Using-SQL-in-4D/Principles-for-integrating-4D-and-the-4D-SQL-engine.300-494388.en.html
  */
 

@@ -1,5 +1,10 @@
 <?php
-
+   
+/**
+ * Connects to 4D and gets requested information.
+ * 
+ * @todo Get cache results to reduce SQL calls!!!
+ */
 class FourD {
   private $db;
 
@@ -9,13 +14,13 @@ class FourD {
       $this->db = new PDO($dsn, $username, $password);
     }
     catch (PDOException $e) {
-      // TODO: More error checking
       trigger_error('4D Connection Failed:' . $e->getMessage(), E_USER_ERROR);
       exit();
     }
   }
 
   function query($query) {
+    //print($query);
     $statement = $this->db->prepare($query);
     $statement->execute();
     return $statement->fetchAll();
@@ -28,17 +33,25 @@ class FourD {
   /**
    * Get the columns in the specified table.
    *
-   * @todo Get all coumns and cache results to reduce SQL calls.
-   *
-   * @param type $table_id
-   * @return type
+   * @param string $table_id
+   * @return array Row data
    */
   function getColumns($table_id) {
-    $query = 'SELECT * FROM _USER_COLUMNS WHERE TABLE_ID=' . $table_id . ';';
+    $query = "SELECT * FROM _USER_COLUMNS WHERE TABLE_ID=" . $table_id . ";";
     return $this->query($query);
   }
   function getIndexes($table_id) {
-    $query = 'SELECT * FROM _USER_INDEXES WHERE TABLE_ID=' . $table_id . ';';
+    $query = "SELECT * FROM _USER_INDEXES WHERE TABLE_ID=" . $table_id . ";";
+    return $this->query($query);
+  }
+  /**
+   * Get the columns in the specified index
+   *
+   * @param string $index_id
+   * @return array Row data
+   */
+  function getIndexColumns($index_id) {
+    $query = "SELECT * FROM _USER_IND_COLUMNS	WHERE INDEX_ID='" . $index_id . "';";
     return $this->query($query);
   }
 

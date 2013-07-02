@@ -46,7 +46,7 @@ class FourDDump {
     foreach($this->fourd->getTables() as $fourd_table) {
       // Only work with permanent (non-temporary) tables.
       if ($fourd_table['TEMPORARY'] == FOURD_FALSE) {
-        $this->tables[$fourd_table['TABLE_NAME']] = $this->parseTable($fourd_table);
+        $this->tables[$fourd_table['TABLE_ID']] = $this->parseTable($fourd_table);
       }
       //print_r($tables);
       //break;
@@ -61,24 +61,44 @@ class FourDDump {
     // Lower case for consistency with column names.
     $table->name = strtolower($fourd_table['TABLE_NAME']);
 
+    // An array of column data stored by name
     $table->columns = array();
+    // Create/recreate a hash of the columns by name
+    $column_by_name = array();
 
+    // Loop through each column
     foreach ($this->fourd->getColumns($fourd_table['TABLE_ID']) as $fourd_column) {
       $column = $this->parseColumn($fourd_column);
       // If column is valid, store it
       if ($column) {
         // If there is a duplicate name, add the id number to the end.
-        if (isset($table->columns[$column->name])) {
+        if (isset($column_by_name[$column->name])) {
           $column->name .= '-' . $column->id;
         }
 
-        // Store the column
-        $table->columns[$column->name] = $column;
+        // Store the column.
+        $table->columns[$column->id] = $column;
+        // Store the by-name lookup hash for determining duplicates.
+        $column_by_name[$column->name] = $table->columns[$column->id];
       }
     }
-    //foreach ($this->fourd->getIndexes($fourd_table['TABLE_ID'] as $four_index) {
 
-    //}
+    $table->indexes = array();
+    // Loop through each index/key
+    foreach ($this->fourd->getIndexes($fourd_table['TABLE_ID']) as $fourd_index) {
+      // @todo: Determine a way to use 4D's INNER JOIN to reduce queries... as in they don't work.
+      // Get the columns in the index
+      $fourd_index_cols = $this->fourd->getIndexColumns($fourd_index['INDEX_ID']);
+      // Parse the 4d index data into a MySQL key.
+      $index = $this->parseIndex($table->columns, $fourd_index, $fourd_index_cols);
+      // If key is valid, store it.
+      if ($index) {
+        // Store by name instead of ID to force unique keys. Dupes are found in my 4D database.
+        $table->indexes[$index->name] = $index;
+      }
+
+    }
+
     return $table;
   }
 
@@ -93,7 +113,7 @@ class FourDDump {
 
     switch($fourd_column['DATA_TYPE']) {
       case FOURD_DATA_BOOL: //id:1
-        $column->type = ' bool';
+        $column->type = 'bool';
         break;
       case FOURD_DATA_INT_16: //id:3
       case FOURD_DATA_INT_32: //id:4
@@ -124,13 +144,16 @@ class FourDDump {
         }
         break;
       case FOURD_DATA_PICTURE: //id:12
-        trigger_error('Unhandled 4D Data Type: Subtable Relation', E_USER_NOTICE);
+        trigger_error('Unhandled 4D Data Type Subtable Relation for:' .
+            $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
         return FALSE;
       case FOURD_DATA_SUBTABLE_RELATION: //id:15
-        trigger_error('Unhandled 4D Data Type: Subtable Relation', E_USER_NOTICE);
+        trigger_error('Unhandled 4D Data Type Subtable Relation for:' .
+            $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
         return FALSE;
       case FOURD_DATA_SUBTABLE_RELATION_AUTO: //id:16
-        trigger_error('Unhandled 4D Data Type: Subtable Relation Automatic', E_USER_NOTICE);
+        trigger_error('Unhandled 4D Data Type Subtable Relation Automatic for:' .
+            $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
         return FALSE;
       case FOURD_DATA_BLOB: //id:18
         $column->type = 'blob';
@@ -147,6 +170,46 @@ class FourDDump {
 
     return $column;
   }
+
+  function parseIndex(&$columns, $fourd_index, $index_cols) {
+    $index = new stdClass();
+
+    $index->id = $fourd_index['INDEX_ID'];
+
+    $index->columns = array();
+
+    // Store each column in the index/key.
+    foreach ($index_cols as $index_col) {
+      $col_id = $index_col['COLUMN_ID'];
+      // Get column position as an integer
+      $col_position = (int)$index_col['COLUMN_POSITION'];
+      // If column does not exist, skip index. Unhandled columns are dropped.
+      if (!isset($columns[$col_id])) {
+        return FALSE;
+      }
+      // If a column is a blob/text, drop the index to avoid severe performance problems.
+      if ($columns[$col_id]->type == 'blob' || $columns[$col_id]->type == 'text') {
+        return FALSE;
+      }
+      // Point to the actual column data.
+      $index->columns[$col_position] = $columns[$col_id]->name;
+    }
+
+    // If the index is named use it, otherwise make up a name.
+    if (empty($fourd_index['INDEX_NAME'])) {
+      // Name = "column1 x column2"
+      $index->name = implode(' x ', $index->columns);
+    }
+    else {
+      $index->name = $fourd_index['INDEX_NAME'];
+    }
+
+    // Store if key/index is unique
+    $index->unique = ($fourd_index['UNIQUENESS'] == FOURD_TRUE);
+
+    return $index;
+  }
+
 
   /**
    * Parses and prints table structure definitions.
@@ -174,12 +237,40 @@ class FourDDump {
       $lines[] = sprintf(PHP_EOL . '  `%s` %s %s', $column->name, $column->type, $null);
     }
 
+    // Loop through each unique key
+    foreach ($table->indexes as $index) {
+      if ($index->unique) {
+        $lines[] = $this->dumpIndexKey($index, TRUE);
+      }
+    }
+
+    // Loop through each non-unique key
+    foreach ($table->indexes as $index) {
+      if (!$index->unique) {
+        $lines[] = $this->dumpIndexKey($index, FALSE);
+      }
+    }
+
+    // Put a comma after every line except for the last.
     $print_lines = implode(',', $lines);
     print($print_lines);
 
     print(PHP_EOL . ') ENGINE=InnoDB DEFAULT CHARSET=utf8;');
     print(PHP_EOL);
+  }
+  
+  function dumpIndexKey($index, $print_unique) {
+    // Prep columns for output, names enclosed in ` separated by ,
+    $key_columns = array();
+    foreach($index->columns as $column) {
+      $key_columns[] = sprintf('`%s`', $column);
+    }
+    $key_columns = implode(',', $key_columns);
 
+    // If unique print unique.
+    $unique = $print_unique ? 'UNIQUE ' : '';
+    // Create the key lines
+    return sprintf(PHP_EOL . '  %sKEY `%s` (%s)', $unique, $index->name, $key_columns);
   }
 }
 
