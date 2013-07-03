@@ -26,29 +26,23 @@ define('FOURD_FALSE', 1);
 
 class FourDDump {
   private $fourd;
-  private $tables;
 
   function __construct($hostname, $username, $password) {
-    // An array to store table structure.
-    $this->tables = array();
-
     // Create the 4d DB connection.
     $this->fourd = new FourD($hostname, $username, $password);
 
-    $this->parseTables();
-    foreach ($this->tables as $table) {
-      $this->dumpTable($table);
-    }
-  }
-
-  function parseTables() {
+    // An array to store table structure.
+    $table = array();
     // Process every table in the database.
     foreach($this->fourd->getTables() as $fourd_table) {
       // Only work with permanent (non-temporary) tables.
       if ($fourd_table['TEMPORARY'] == FOURD_FALSE) {
-        $this->tables[$fourd_table['TABLE_ID']] = $this->parseTable($fourd_table);
+        $table = $this->parseTable($fourd_table);
       }
-      //print_r($tables);
+
+      $this->dumpTableStructure($table);
+
+      //print_r($table);
       //break;
     }
   }
@@ -96,8 +90,14 @@ class FourDDump {
         // Store by name instead of ID to force unique keys. Dupes are found in my 4D database.
         $table->indexes[$index->name] = $index;
       }
-
     }
+
+
+    $original_columns = array();
+    foreach($table->columns as $column) {
+      $original_columns[] = $column->original_name;
+    }
+    $table->data = $this->fourd->getRows($fourd_table['TABLE_NAME'], $original_columns);
 
     return $table;
   }
@@ -110,6 +110,21 @@ class FourDDump {
     // Converting all column names to lowercase because 4D allows duplicate
     // column names and we need unique names.
     $column->name = strtolower($fourd_column['COLUMN_NAME']);
+    // If column name is a SQL reserved word, drop/ignore table.
+    if ($column->name == 'group') {
+      trigger_error('Invalid 4D column name (SQL Reserved):' .
+        $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
+      return FALSE;
+    }
+    // If column name contains a space, drop/ignore table.
+    if (strpos($column->name, ' ') !== FALSE) {
+      trigger_error('Invalid 4D column name (Contains Spaces):' .
+        $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
+      return FALSE;
+    }
+
+    // Store original name for select statement to ignore dropped tables.
+    $column->original_name = $fourd_column['COLUMN_NAME'];
 
     switch($fourd_column['DATA_TYPE']) {
       case FOURD_DATA_BOOL: //id:1
@@ -187,7 +202,7 @@ class FourDDump {
       if (!isset($columns[$col_id])) {
         return FALSE;
       }
-      // If a column is a blob/text, drop the index to avoid severe performance problems.
+      // If column is a blob/text, drop the index to avoid severe performance problems.
       if ($columns[$col_id]->type == 'blob' || $columns[$col_id]->type == 'text') {
         return FALSE;
       }
@@ -218,7 +233,7 @@ class FourDDump {
    * @param type $columns
    * @todo: Indexes
    */
-  function dumpTable($table) {
+  function dumpTableStructure($table) {
     print(PHP_EOL . '--');
     printf(PHP_EOL . '-- Table structure for table `%s`', $table->name);
     print(PHP_EOL . '--');
@@ -258,7 +273,7 @@ class FourDDump {
     print(PHP_EOL . ') ENGINE=InnoDB DEFAULT CHARSET=utf8;');
     print(PHP_EOL);
   }
-  
+
   function dumpIndexKey($index, $print_unique) {
     // Prep columns for output, names enclosed in ` separated by ,
     $key_columns = array();
