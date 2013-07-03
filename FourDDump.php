@@ -31,19 +31,27 @@ class FourDDump {
     // Create the 4d DB connection.
     $this->fourd = new FourD($hostname, $username, $password);
 
-    // An array to store table structure.
-    $table = array();
     // Process every table in the database.
     foreach($this->fourd->getTables() as $fourd_table) {
+      // An array to store table structure.
+      $table = array();
       // Only work with permanent (non-temporary) tables.
       if ($fourd_table['TEMPORARY'] == FOURD_FALSE) {
         $table = $this->parseTable($fourd_table);
       }
 
-      $this->dumpTableStructure($table);
+      if (count($table->columns) == 0) {
+        trigger_error('4D Table has no existing columns:' .
+          $table->name, E_USER_NOTICE);
+      }
+      else {
+        $this->dumpTableStructure($table);
 
+        $this->dumpTableData($table);
+      }
+      unset($table);
       //print_r($table);
-      //break;
+      //exit;
     }
   }
 
@@ -91,7 +99,6 @@ class FourDDump {
         $table->indexes[$index->name] = $index;
       }
     }
-
 
     $original_columns = array();
     foreach($table->columns as $column) {
@@ -171,7 +178,10 @@ class FourDDump {
             $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
         return FALSE;
       case FOURD_DATA_BLOB: //id:18
+        trigger_error('Ignoring binary data in Blob column:' .
+            $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
         $column->type = 'blob';
+        return FALSE;
         break;
       default:
         // Trigger warning for unknown data types.
@@ -230,8 +240,6 @@ class FourDDump {
    * Parses and prints table structure definitions.
    *
    * @param type $table
-   * @param type $columns
-   * @todo: Indexes
    */
   function dumpTableStructure($table) {
     print(PHP_EOL . '--');
@@ -287,6 +295,42 @@ class FourDDump {
     // Create the key lines
     return sprintf(PHP_EOL . '  %sKEY `%s` (%s)', $unique, $index->name, $key_columns);
   }
+
+  /**
+   * Prints table data
+   *
+   * @param type $table
+   */
+  function dumpTableData($table) {
+    print(PHP_EOL . '--');
+    printf(PHP_EOL . '-- Dumping data for table `%s`', $table->name);
+    print(PHP_EOL . '--');
+    print(PHP_EOL);
+    printf(PHP_EOL . 'LOCK TABLES `%s` WRITE;', $table->name);
+    print(PHP_EOL . 'set autocommit=0;');
+
+    // Loop through each row and column
+    foreach ($table->data as $row) {
+      $values = array();
+      //print_r($row);
+      foreach ($table->columns as $column) {
+        //print_r($column);
+        $original_name = strtoupper($column->original_name);
+        if($column->type == 'int') {
+          $values[] = sprintf("%d", $row[$original_name]);
+        }
+        else {
+          $values[] = sprintf("'%s'", mysql_real_escape_string($row[$original_name]));
+        }
+      }
+      // Put a comma after every line except for the last.
+      $print_values = implode(',', $values);
+      printf(PHP_EOL . 'INSERT INTO `%s` VALUES (%s);', $table->name, $print_values);
+    }
+
+    print(PHP_EOL . 'UNLOCK TABLES;');
+    print(PHP_EOL . 'commit;');
+    print(PHP_EOL);
+  }
+
 }
-
-

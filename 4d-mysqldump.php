@@ -11,7 +11,10 @@
  * @todo Load h/u/p from ~/.4d.conf
  * @todo Add -t option to specify tables to export
  * @todo Implement Foreign Keys.
- * @todo Support Subtable relationships: http://doc.4d.com/4D-Language-Reference-12.4/Subrecords/Get-subrecord-key.301-977448.en.html
+ * @todo Check 4D bool values, and flip as needed
+ * @todo Correct all notices to status report comments.
+ * @todo Support automatic Subtable relationships if possible.
+ * @see http://doc.4d.com/4D-Language-Reference-12.4/Subrecords/Get-subrecord-key.301-977448.en.html
  * @see http://doc.4d.com/4D-SQL-Reference-12.1/Using-SQL-in-4D/Principles-for-integrating-4D-and-the-4D-SQL-engine.300-494388.en.html
  */
 
@@ -57,15 +60,4 @@ if (!isset($options['p'])) {
 
 $fourd_dump = new FourDDump($options['h'], $options['u'], $options['p']);
 
-//--
-//-- Dumping data for table `actions`
-//--
-//
-//LOCK TABLES `actions` WRITE;
-///*!40000 ALTER TABLE `actions` DISABLE KEYS */;
-//set autocommit=0;
-//INSERT INTO `actions` VALUES ('comment_publish_action','comment','comment_publish_action','','Publish comment');
-///*!40000 ALTER TABLE `actions` ENABLE KEYS */;
-//UNLOCK TABLES;
-//commit;
-
+//Done!

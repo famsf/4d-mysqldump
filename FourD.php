@@ -78,7 +78,7 @@ class FourD {
     $results = array();
     foreach($column_list_list as $column_list) {
       $columns = implode(',', $column_list);
-      $query = "SELECT " . $columns . " FROM " . $table_name . " LIMIT 10;";
+      $query = "SELECT " . $columns . " FROM " . $table_name . " LIMIT 20000;";
 
       $statement = $this->db->prepare($query);
       $statement->execute();
