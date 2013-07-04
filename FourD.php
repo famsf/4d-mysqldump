@@ -9,6 +9,7 @@ define("FOURD_SQL_COLUMN_LIMIT", 30);
  */
 class FourD {
   private $db;
+  private $statements;
 
   function __construct($hostname, $username, $password) {
     $dsn = '4D:host=' . $hostname . ';charset=UTF-8';
@@ -25,7 +26,7 @@ class FourD {
     //print($query);
     $statement = $this->db->prepare($query);
     $statement->execute();
-    return $statement->fetchAll();
+    return $statement->fetchAll(PDO::FETCH_ASSOC);
   }
 
   function getTables() {
@@ -57,17 +58,15 @@ class FourD {
     return $this->query($query);
   }
 
-  function getRows($table_name, $column_list = array()) {
-    $column_list_list = array($column_list);
-    // Break the column_name array into an array of arrays with max lenght of FOURD_SQL_COLUMN_LIMIT
-    // @todo: Fix the column ordering, this method puts the last columns at the start.
-    while (count($column_list_list[0]) > FOURD_SQL_COLUMN_LIMIT) {
-      $column_list_list[] = array_splice($column_list_list[0], 0, FOURD_SQL_COLUMN_LIMIT);
-    }
+  function startSelect($table_name, $column_names = array()) {
 
-    // Run the column lists as separate select queries, then combine the data
+    // Break the column_name array into an array of arrays with max length of
+    // FOURD_SQL_COLUMN_LIMIT. Long statements segfault the PDO 4D extension.
+    $columns_list = array_chunk($column_names, FOURD_SQL_COLUMN_LIMIT);
+
+    // We run the column lists as separate select queries, then combine the data
     // afterward. Select queries with large numbers of column names cause PHP
-    // segmentation faults in PDO in $statement->fetch(). This is a workaround.
+    // segmentation faults at PDO in $statement->fetch(). This is a workaround.
     // Segmentation fault details:
     //   Program received signal SIGSEGV, Segmentation fault.
     //     pdo_4d_stmt_get_col (stmt=<optimized out>, colno=<optimized out>, ptr=0x7fffffffad58,
@@ -75,28 +74,28 @@ class FourD {
     //         at pdo_4d/4d_statement.c:141
     //     141						*ptr=emalloc(b->length);
 
-    $results = array();
-    foreach($column_list_list as $column_list) {
-      $columns = implode(',', $column_list);
-      $query = "SELECT " . $columns . " FROM " . $table_name . " LIMIT 20000;";
+    $this->statements = array();
 
-      $statement = $this->db->prepare($query);
-      $statement->execute();
-      // Reset the counter
-      $count = 0;
-      // Run the query
-      while ($row = $statement->fetch()) {
-        // Build a new result array
-        foreach ($row as $key => $value) {
-          // Ignore the numeric keys.
-          if (!is_numeric($key)) {
-            $results[$count][$key] = $value;
-          }
-        }
-        $count++;
+    for($i = 0; $i < count($columns_list); $i++) {
+
+      $columns_print = implode(',', $columns_list[$i]);
+      $query = "SELECT " . $columns_print . " FROM " . $table_name . ";";// LIMIT 50000;";
+
+      $this->statements[$i] = $this->db->prepare($query);
+      $this->statements[$i]->execute();
+    }
+  }
+
+  function getRow() {
+    $result = array();
+    foreach($this->statements as $statement) {
+      if ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+        $result = array_merge($result, $row);
+      }
+      else {
+        return FALSE;
       }
     }
-    return $results;
-
+    return $result;
   }
 }

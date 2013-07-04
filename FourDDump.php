@@ -51,7 +51,7 @@ class FourDDump {
       }
       unset($table);
       //print_r($table);
-      //exit;
+      exit;
     }
   }
 
@@ -99,13 +99,6 @@ class FourDDump {
         $table->indexes[$index->name] = $index;
       }
     }
-
-    $original_columns = array();
-    foreach($table->columns as $column) {
-      $original_columns[] = $column->original_name;
-    }
-    $table->data = $this->fourd->getRows($fourd_table['TABLE_NAME'], $original_columns);
-
     return $table;
   }
 
@@ -239,7 +232,7 @@ class FourDDump {
   /**
    * Parses and prints table structure definitions.
    *
-   * @param type $table
+   * @param string $table
    */
   function dumpTableStructure($table) {
     print(PHP_EOL . '--');
@@ -299,9 +292,15 @@ class FourDDump {
   /**
    * Prints table data
    *
-   * @param type $table
+   * @param string $table
    */
   function dumpTableData($table) {
+    $original_columns = array();
+    foreach($table->columns as $column) {
+      $original_columns[] = $column->original_name;
+    }
+    $this->fourd->startSelect($table->name, $original_columns);
+
     print(PHP_EOL . '--');
     printf(PHP_EOL . '-- Dumping data for table `%s`', $table->name);
     print(PHP_EOL . '--');
@@ -310,22 +309,23 @@ class FourDDump {
     print(PHP_EOL . 'set autocommit=0;');
 
     // Loop through each row and column
-    foreach ($table->data as $row) {
+    while ($row = $this->fourd->getRow()) {
       $values = array();
-      //print_r($row);
       foreach ($table->columns as $column) {
-        //print_r($column);
         $original_name = strtoupper($column->original_name);
+        $value = $row[$original_name];
         if($column->type == 'int') {
-          $values[] = sprintf("%d", $row[$original_name]);
+          $values[] = sprintf("%d", $value);
         }
         else {
-          $values[] = sprintf("'%s'", mysql_real_escape_string($row[$original_name]));
+          $values[] = sprintf("'%s'", mysql_real_escape_string($value));
         }
       }
       // Put a comma after every line except for the last.
       $print_values = implode(',', $values);
       printf(PHP_EOL . 'INSERT INTO `%s` VALUES (%s);', $table->name, $print_values);
+      // Attempt to force garbage collection
+      unset($row);
     }
 
     print(PHP_EOL . 'UNLOCK TABLES;');
