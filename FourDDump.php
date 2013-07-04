@@ -33,8 +33,6 @@ class FourDDump {
 
     // Process every table in the database.
     foreach($this->fourd->getTables() as $fourd_table) {
-      // An array to store table structure.
-      $table = array();
       // Only work with permanent (non-temporary) tables.
       if ($fourd_table['TEMPORARY'] == FOURD_FALSE) {
         $table = $this->parseTable($fourd_table);
@@ -51,7 +49,7 @@ class FourDDump {
       }
       unset($table);
       //print_r($table);
-      exit;
+      //exit;
     }
   }
 

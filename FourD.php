@@ -8,13 +8,19 @@ define("FOURD_SQL_COLUMN_LIMIT", 30);
  * @todo Get cache results to reduce SQL calls!!!
  */
 class FourD {
+  private $hostname;
+  private $username;
+  private $password;
   private $db;
   private $statements;
 
   function __construct($hostname, $username, $password) {
-    $dsn = '4D:host=' . $hostname . ';charset=UTF-8';
+    $this->hostname = $hostname;
+    $this->username = $username;
+    $this->password = $password;
+    $dsn = '4D:host=' . $this->hostname . ';charset=UTF-8';
     try {
-      $this->db = new PDO($dsn, $username, $password);
+      $this->db = new PDO($dsn, $this->username, $this->password);
     }
     catch (PDOException $e) {
       trigger_error('4D Connection Failed:' . $e->getMessage(), E_USER_ERROR);
@@ -23,7 +29,6 @@ class FourD {
   }
 
   function query($query) {
-    //print($query);
     $statement = $this->db->prepare($query);
     $statement->execute();
     return $statement->fetchAll(PDO::FETCH_ASSOC);
@@ -59,7 +64,6 @@ class FourD {
   }
 
   function startSelect($table_name, $column_names = array()) {
-
     // Break the column_name array into an array of arrays with max length of
     // FOURD_SQL_COLUMN_LIMIT. Long statements segfault the PDO 4D extension.
     $columns_list = array_chunk($column_names, FOURD_SQL_COLUMN_LIMIT);
@@ -79,7 +83,7 @@ class FourD {
     for($i = 0; $i < count($columns_list); $i++) {
 
       $columns_print = implode(',', $columns_list[$i]);
-      $query = "SELECT " . $columns_print . " FROM " . $table_name . ";";// LIMIT 50000;";
+      $query = "SELECT " . $columns_print . " FROM " . $table_name . ";";//" LIMIT 50000 OFFSET 50000 ;";
 
       $this->statements[$i] = $this->db->prepare($query);
       $this->statements[$i]->execute();
