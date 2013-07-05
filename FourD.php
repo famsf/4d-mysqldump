@@ -6,6 +6,7 @@ define("FOURD_SQL_COLUMN_LIMIT", 30);
  * Connects to 4D and gets requested information.
  *
  * @todo Get cache results to reduce SQL calls!!!
+ * @todo Fix SQL injections.
  */
 class FourD {
   private $hostname;
@@ -25,7 +26,7 @@ class FourD {
     $dsn = '4D:host=' . $this->hostname . ';charset=UTF-8';
     $connected = FALSE;
     $attempts = 0;
-    // Try to connect multiple times, defaults to 3.
+    // Try to connect multiple times.
     while(!$connected) {      
       try {
         $this->db = new PDO($dsn, $this->username, $this->password);
@@ -53,8 +54,13 @@ class FourD {
     return $statement->fetchAll(PDO::FETCH_ASSOC);
   }
 
-  function getTables($select_tables = array()) {
-    $query = 'SELECT ' . $select_tables . ' FROM _USER_TABLES;';
+  function getTables($select_table) {
+    if (is_null($select_table)) {
+      $query = "SELECT * FROM _USER_TABLES;";
+    }
+    else {
+      $query = "SELECT * FROM _USER_TABLES WHERE TABLE_NAME='" . $select_table . "'";
+    }
     return $this->query($query);
   }
   /**

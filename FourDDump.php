@@ -27,17 +27,17 @@ define('FOURD_FALSE', 1);
 class FourDDump {
   private $fourd;
   private $retries;
-  private $select_tables;
+  private $select_table;
 
-  function __construct($hostname, $username, $password, $retries, $select_tables = '*') {
+  function __construct($hostname, $username, $password, $retries, $select_table = NULL) {
     $this->retries = $retries;
-    $this->select_tables = $select_tables;
-    
+    $this->select_table = $select_table;
+
     // Create the 4d DB connection.
     $this->fourd = new FourD($hostname, $username, $password, $this->retries);
 
-    // Process every table specified.
-    foreach($this->fourd->getTables($select_tables) as $fourd_table) {
+    // Process all tables or specified tables.
+    foreach($this->fourd->getTables($select_table) as $fourd_table) {
       $table = $this->parseTable($fourd_table);
 
       if (count($table->columns) == 0) {

@@ -63,14 +63,14 @@ if (isset($options['r'])) {
   $retries = $options['r'];
 }
 
-// Specify table(s) to dump -t
-$select_tables = '*';
+// Specify table to dump -t (Case must match exactly!)
+$select_table = NULL;
 if (isset($options['t'])) {
-  $select_tables = $options['t'];
+  $select_table = $options['t'];
 }
 
 // @todo: Run SQL query -s
 
-$fourd_dump = new FourDDump($options['h'], $options['u'], $options['p'], $retries, $select_tables);
+$fourd_dump = new FourDDump($options['h'], $options['u'], $options['p'], $retries, $select_table);
 
 //Done!
