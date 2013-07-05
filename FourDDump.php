@@ -29,13 +29,20 @@ class FourDDump {
   private $retries;
   private $select_table;
 
-  function __construct($hostname, $username, $password, $retries, $select_table = NULL) {
+  function __construct($hostname, $username, $password, $retries, $select_table = NULL, $list_tables) {
     $this->retries = $retries;
     $this->select_table = $select_table;
 
     // Create the 4d DB connection.
     $this->fourd = new FourD($hostname, $username, $password, $this->retries);
-
+    
+    if($list_tables) {      
+      foreach($this->fourd->getTables($select_table) as $fourd_table) {
+        print($fourd_table['TABLE_NAME'] . PHP_EOL);        
+      }
+      exit();
+    }
+        
     if(is_null($select_table)) {
       // Process all tables
       foreach($this->fourd->getTables($select_table) as $fourd_table) {
