@@ -29,7 +29,7 @@ function help() {
   print 'Copyright 2013 Fine Arts Museums of San Francisco. Created by Brad Erickson.' . PHP_EOL;
   print '' . PHP_EOL;
   print 'Dumps structure and contents of 4D databases and tables to MySQL.' . PHP_EOL;
-  print 'Usage: 4d-mysqldump -hHostname -uUsername -pPassword -rRetries' . PHP_EOL;
+  print 'Usage: 4d-mysqldump -hHostname -uUsername -pPassword [-rRetries]' . PHP_EOL;
   print '' . PHP_EOL;
 }
 

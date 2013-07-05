@@ -17,7 +17,7 @@ class FourD {
   private $retries;
   private $total_attempts;
 
-  function __construct($hostname, $username, $password, $retries) {   
+  function __construct($hostname, $username, $password, $retries) {
     $this->hostname = $hostname;
     $this->username = $username;
     $this->password = $password;
@@ -27,16 +27,16 @@ class FourD {
     $connected = FALSE;
     $attempts = 0;
     // Try to connect multiple times.
-    while(!$connected) {      
+    while(!$connected) {
       try {
         $this->db = new PDO($dsn, $this->username, $this->password);
       }
       catch (PDOException $e) {
         // Total allowed attempts = retries plus the intial attempt.
         if ($attempts > $this->retries) {
-          
+
           trigger_error('4D connection failed, after ' . $attempts . ' attempt(s):' . $e->getMessage(), E_USER_ERROR);
-          exit();          
+          exit();
         }
       }
       if ($this->db) {
@@ -108,7 +108,7 @@ class FourD {
     for($i = 0; $i < count($columns_list); $i++) {
 
       $columns_print = implode(',', $columns_list[$i]);
-      $query = "SELECT " . $columns_print . " FROM " . $table_name . " LIMIT 10000;";//" LIMIT 50000 OFFSET 50000 ;";
+      $query = "SELECT " . $columns_print . " FROM " . $table_name . ";";//" LIMIT 50000 OFFSET 50000 ;";
 
       $this->statements[$i] = $this->db->prepare($query);
       $this->statements[$i]->execute();

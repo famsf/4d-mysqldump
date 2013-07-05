@@ -36,25 +36,32 @@ class FourDDump {
     // Create the 4d DB connection.
     $this->fourd = new FourD($hostname, $username, $password, $this->retries);
 
-    // Process all tables or specified tables.
-    foreach($this->fourd->getTables($select_table) as $fourd_table) {
-      $table = $this->parseTable($fourd_table);
+    if(is_null($select_table)) {
+      // Process all tables
+      foreach($this->fourd->getTables($select_table) as $fourd_table) {
+        passthru($_SERVER['PHP_SELF'] . ' -h'. $hostname . ' -u' . $username . ' -p' . $password . ' -r' . $retries . ' -t' . $fourd_table['TABLE_NAME']);
+      }
+    }
+    else {
+      // Process specified table.
+      foreach($this->fourd->getTables($select_table) as $fourd_table) {
+        $table = $this->parseTable($fourd_table);
 
-      if (count($table->columns) == 0) {
-        trigger_error('4D Table has no existing columns:' .
-          $table->name, E_USER_NOTICE);
+        if (count($table->columns) == 0) {
+          trigger_error('4D Table has no existing columns:' .
+            $table->name, E_USER_NOTICE);
+        }
+        else {
+          $this->dumpTableStructure($table);
+          $this->dumpTableData($table);
+        }
       }
-      else {
-        $this->dumpTableStructure($table);
-        $this->dumpTableData($table);
-      }
-      break;
     }
   }
 
   function parseTable($fourd_table) {
     $table = new stdClass();
-    // @todo: Mark as temporary
+    // @todo: Mark table as temporary
 
     // Store the table id/name
     $table->id = $fourd_table['TABLE_ID'];
@@ -116,7 +123,7 @@ class FourDDump {
     }
     // If column name contains a space, drop/ignore table.
     if (strpos($column->name, ' ') !== FALSE) {
-      trigger_error('Invalid 4D column name (Contains Spaces):' .
+      trigger_error('Invalid 4D column name (Contains spaces):' .
         $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
       return FALSE;
     }
