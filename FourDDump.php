@@ -26,17 +26,19 @@ define('FOURD_FALSE', 1);
 
 class FourDDump {
   private $fourd;
+  private $retries;
+  private $select_tables;
 
-  function __construct($hostname, $username, $password) {
+  function __construct($hostname, $username, $password, $retries, $select_tables = '*') {
+    $this->retries = $retries;
+    $this->select_tables = $select_tables;
+    
     // Create the 4d DB connection.
-    $this->fourd = new FourD($hostname, $username, $password);
+    $this->fourd = new FourD($hostname, $username, $password, $this->retries);
 
-    // Process every table in the database.
-    foreach($this->fourd->getTables() as $fourd_table) {
-      // Only work with permanent (non-temporary) tables.
-      if ($fourd_table['TEMPORARY'] == FOURD_FALSE) {
-        $table = $this->parseTable($fourd_table);
-      }
+    // Process every table specified.
+    foreach($this->fourd->getTables($select_tables) as $fourd_table) {
+      $table = $this->parseTable($fourd_table);
 
       if (count($table->columns) == 0) {
         trigger_error('4D Table has no existing columns:' .
@@ -44,17 +46,15 @@ class FourDDump {
       }
       else {
         $this->dumpTableStructure($table);
-
         $this->dumpTableData($table);
       }
-      unset($table);
-      //print_r($table);
-      //exit;
+      break;
     }
   }
 
   function parseTable($fourd_table) {
     $table = new stdClass();
+    // @todo: Mark as temporary
 
     // Store the table id/name
     $table->id = $fourd_table['TABLE_ID'];
@@ -157,7 +157,7 @@ class FourDDump {
         }
         break;
       case FOURD_DATA_PICTURE: //id:12
-        trigger_error('Unhandled 4D Data Type Subtable Relation for:' .
+        trigger_error('Unhandled 4D Data Type Picture for:' .
             $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
         return FALSE;
       case FOURD_DATA_SUBTABLE_RELATION: //id:15
@@ -165,17 +165,18 @@ class FourDDump {
             $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
         return FALSE;
       case FOURD_DATA_SUBTABLE_RELATION_AUTO: //id:16
+        // @todo: Fix.
         trigger_error('Unhandled 4D Data Type Subtable Relation Automatic for:' .
             $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
         return FALSE;
       case FOURD_DATA_BLOB: //id:18
+        // @todo: Fix.
         trigger_error('Ignoring binary data in Blob column:' .
             $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
         $column->type = 'blob';
         return FALSE;
-        break;
       default:
-        // Trigger warning for unknown data types.
+        // Trigger warning for unknown data types and skip them.
         trigger_error('Unknown 4D Data Type. ID: ' . $fourd_column['DATA_TYPE'] .
             ' Column: ' . $fourd_column['COLUMN_NAME'], E_USER_WARNING);
         return FALSE;
@@ -205,6 +206,7 @@ class FourDDump {
       }
       // If column is a blob/text, drop the index to avoid severe performance problems.
       if ($columns[$col_id]->type == 'blob' || $columns[$col_id]->type == 'text') {
+        // @todo: Perhaps add this to the SQL as a comment?
         return FALSE;
       }
       // Point to the actual column data.
@@ -310,8 +312,7 @@ class FourDDump {
     while ($row = $this->fourd->getRow()) {
       $values = array();
       foreach ($table->columns as $column) {
-        $original_name = strtoupper($column->original_name);
-        $value = $row[$original_name];
+        $value = $row[strtoupper($column->original_name)];
         if($column->type == 'int') {
           $values[] = sprintf("%d", $value);
         }
@@ -322,8 +323,6 @@ class FourDDump {
       // Put a comma after every line except for the last.
       $print_values = implode(',', $values);
       printf(PHP_EOL . 'INSERT INTO `%s` VALUES (%s);', $table->name, $print_values);
-      // Attempt to force garbage collection
-      unset($row);
     }
 
     print(PHP_EOL . 'UNLOCK TABLES;');

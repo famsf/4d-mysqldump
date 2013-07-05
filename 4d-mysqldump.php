@@ -29,12 +29,12 @@ function help() {
   print 'Copyright 2013 Fine Arts Museums of San Francisco. Created by Brad Erickson.' . PHP_EOL;
   print '' . PHP_EOL;
   print 'Dumps structure and contents of 4D databases and tables to MySQL.' . PHP_EOL;
-  print 'Usage: 4d-mysqldump -h hostname -u username -p password' . PHP_EOL;
+  print 'Usage: 4d-mysqldump -hHostname -uUsername -pPassword -rRetries' . PHP_EOL;
   print '' . PHP_EOL;
 }
 
 // Get required command line arguments host, username, password.
-$options = getopt("h:u:p:");
+$options = getopt("h:u:p:r::t::s::");
 
 // Check host option
 if (!isset($options['h'])) {
@@ -57,7 +57,20 @@ if (!isset($options['p'])) {
   exit();
 }
 
+// Retry connection # of times. -r (excludes intitial attempt)
+$retries = 3;
+if (isset($options['r'])) {
+  $retries = $options['r'];
+}
 
-$fourd_dump = new FourDDump($options['h'], $options['u'], $options['p']);
+// Specify table(s) to dump -t
+$select_tables = '*';
+if (isset($options['t'])) {
+  $select_tables = $options['t'];
+}
+
+// @todo: Run SQL query -s
+
+$fourd_dump = new FourDDump($options['h'], $options['u'], $options['p'], $retries, $select_tables);
 
 //Done!

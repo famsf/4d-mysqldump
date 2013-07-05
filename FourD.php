@@ -13,18 +13,37 @@ class FourD {
   private $password;
   private $db;
   private $statements;
+  private $retries;
+  private $total_attempts;
 
-  function __construct($hostname, $username, $password) {
+  function __construct($hostname, $username, $password, $retries) {   
     $this->hostname = $hostname;
     $this->username = $username;
     $this->password = $password;
+    $this->retries = $retries;
+
     $dsn = '4D:host=' . $this->hostname . ';charset=UTF-8';
-    try {
-      $this->db = new PDO($dsn, $this->username, $this->password);
-    }
-    catch (PDOException $e) {
-      trigger_error('4D Connection Failed:' . $e->getMessage(), E_USER_ERROR);
-      exit();
+    $connected = FALSE;
+    $attempts = 0;
+    // Try to connect multiple times, defaults to 3.
+    while(!$connected) {      
+      try {
+        $this->db = new PDO($dsn, $this->username, $this->password);
+      }
+      catch (PDOException $e) {
+        // Total allowed attempts = retries plus the intial attempt.
+        if ($attempts > $this->retries) {
+          
+          trigger_error('4D connection failed, after ' . $attempts . ' attempt(s):' . $e->getMessage(), E_USER_ERROR);
+          exit();          
+        }
+      }
+      if ($this->db) {
+        $connected = TRUE;
+      }
+      // Increase the counters
+      $attempts++;
+      $this->total_attempts++;
     }
   }
 
@@ -34,8 +53,8 @@ class FourD {
     return $statement->fetchAll(PDO::FETCH_ASSOC);
   }
 
-  function getTables() {
-    $query = 'SELECT * FROM _USER_TABLES;';
+  function getTables($select_tables = array()) {
+    $query = 'SELECT ' . $select_tables . ' FROM _USER_TABLES;';
     return $this->query($query);
   }
   /**
@@ -83,7 +102,7 @@ class FourD {
     for($i = 0; $i < count($columns_list); $i++) {
 
       $columns_print = implode(',', $columns_list[$i]);
-      $query = "SELECT " . $columns_print . " FROM " . $table_name . ";";//" LIMIT 50000 OFFSET 50000 ;";
+      $query = "SELECT " . $columns_print . " FROM " . $table_name . " LIMIT 10000;";//" LIMIT 50000 OFFSET 50000 ;";
 
       $this->statements[$i] = $this->db->prepare($query);
       $this->statements[$i]->execute();
