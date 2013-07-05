@@ -182,7 +182,8 @@ class FourDDump {
         // @todo: Fix.
         trigger_error('Unhandled 4D Data Type Subtable Relation Automatic for:' .
             $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
-        return FALSE;
+        $column->type = 'subtable-auto';
+        break;
       case FOURD_DATA_BLOB: //id:18
         // @todo: Fix.
         trigger_error('Ignoring binary data in Blob column:' .
@@ -327,7 +328,8 @@ class FourDDump {
       $values = array();
       foreach ($table->columns as $column) {
         $value = $row[strtoupper($column->original_name)];
-        if($column->type == 'int') {
+        $numeric_values = array('int','subtable-auto');
+        if(in_array($column->type, $numeric_values)) {
           $values[] = sprintf("%d", $value);
         }
         else {
