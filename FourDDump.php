@@ -179,16 +179,14 @@ class FourDDump {
             $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
         return FALSE;
       case FOURD_DATA_SUBTABLE_RELATION_AUTO: //id:16
-        // @todo: Fix.
-        trigger_error('Unhandled 4D Data Type Subtable Relation Automatic for:' .
-            $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
-        $column->type = 'subtable-auto';
+        // @todo: Add comments and constraints
+        $column->type = 'int';
         break;
       case FOURD_DATA_BLOB: //id:18
-        // @todo: Fix.
-        trigger_error('Ignoring binary data in Blob column:' .
+        //$column->type = 'blob';
+        //break;
+        trigger_error('Unhandled 4D Data Type Blob for:' .
             $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
-        $column->type = 'blob';
         return FALSE;
       default:
         // Trigger warning for unknown data types and skip them.
@@ -328,7 +326,11 @@ class FourDDump {
       $values = array();
       foreach ($table->columns as $column) {
         $value = $row[strtoupper($column->original_name)];
-        $numeric_values = array('int','subtable-auto');
+        // Set correct bool values, flipping compared to 4D defaults.
+        if($column->type == 'bool') {
+          $value = ($value == FOURD_TRUE) ? 1 : 0;
+        }
+        $numeric_values = array('int', 'bool');
         if(in_array($column->type, $numeric_values)) {
           $values[] = sprintf("%d", $value);
         }
