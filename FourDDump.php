@@ -35,14 +35,14 @@ class FourDDump {
 
     // Create the 4d DB connection.
     $this->fourd = new FourD($hostname, $username, $password, $this->retries);
-    
-    if($list_tables) {      
+
+    if($list_tables) {
       foreach($this->fourd->getTables($select_table) as $fourd_table) {
-        print($fourd_table['TABLE_NAME'] . PHP_EOL);        
+        print($fourd_table['TABLE_NAME'] . PHP_EOL);
       }
       exit();
     }
-        
+
     if(is_null($select_table)) {
       // Process all tables
       foreach($this->fourd->getTables($select_table) as $fourd_table) {
@@ -326,10 +326,23 @@ class FourDDump {
       $values = array();
       foreach ($table->columns as $column) {
         $value = $row[strtoupper($column->original_name)];
-        // Set correct bool values, flipping compared to 4D defaults.
-        if($column->type == 'bool') {
-          $value = ($value == FOURD_TRUE) ? 1 : 0;
+        switch ($column->type) {
+          case 'bool':
+            // Set correct bool values, flipping compared to 4D defaults.
+            $value = ($value == FOURD_TRUE) ? 1 : 0;
+            break;
+          case 'datetime':
+            // If the / is in the correct position, clean up the microseconds.
+            if (strpos($value, '/') == 4) {
+              $value = substr($value, 0, 19);
+            }
+            // Otherwise, return an empty value. This will drop years >10000.
+            else {
+              $value = '0000/00/00 00:00:00';
+            }
+            break;
         }
+
         $numeric_values = array('int', 'bool');
         if(in_array($column->type, $numeric_values)) {
           $values[] = sprintf("%d", $value);

@@ -103,12 +103,13 @@ class FourD {
     //         at pdo_4d/4d_statement.c:141
     //     141						*ptr=emalloc(b->length);
 
-    $this->statements = array();
 
+    $this->statements = array();
     for($i = 0; $i < count($columns_list); $i++) {
 
       $columns_print = implode(',', $columns_list[$i]);
-      $query = "SELECT " . $columns_print . " FROM " . $table_name . ";";//" LIMIT 50000 OFFSET 50000 ;";
+      $query = "SELECT " . $columns_print . " FROM " . $table_name . ";";
+      //$query = "SELECT " . $columns_print . " FROM " . $table_name . " LIMIT 1 OFFSET 108 ;";
 
       $this->statements[$i] = $this->db->prepare($query);
       $this->statements[$i]->execute();
