@@ -74,6 +74,8 @@ if (isset($options['t'])) {
 }
 
 // @todo: Run SQL query -s
+// @todo: Limit/Offset
+// @todo: Test database, look for problems. Change -t?
 
 $fourd_dump = new FourDDump($options['h'], $options['u'], $options['p'], $retries, $select_table, $list_tables);
 

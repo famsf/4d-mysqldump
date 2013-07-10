@@ -149,18 +149,20 @@ class FourDDump {
         $column->type = 'int';
         break;
       case FOURD_DATA_REAL: //id:6
-        $column->type = 'real';
+        $column->type = 'double';
         break;
       case FOURD_DATA_DATETIME: //id:8
         $column->type = 'datetime';
         break;
       case FOURD_DATA_TIME: //id:9
-        $column->type = 'time';
+        // int instead of time, because this is stored as a unix timestamp value.
+        $column->type = 'int';
         break;
       case FOURD_DATA_TEXT: //id:10
         // If $var_length is zero, this is a MySQL TEXT field.
         if ($fourd_column['DATA_LENGTH'] == 0) {
-          $column->type = 'text';
+          // Using mediumtext instead of text, because text has a 16k limit and 4D doesn't.
+          $column->type = 'mediumtext';
         }
         // If $var_length is not zero, this is a VARCHAR.
         else {
@@ -218,7 +220,8 @@ class FourDDump {
         return FALSE;
       }
       // If column is a blob/text, drop the index to avoid severe performance problems.
-      if ($columns[$col_id]->type == 'blob' || $columns[$col_id]->type == 'text') {
+      $drop_column_types = array('blob', 'text', 'mediumtext');
+      if (in_array($columns[$col_id]->type, $drop_column_types)) {
         // @todo: Perhaps add this to the SQL as a comment?
         return FALSE;
       }
@@ -341,9 +344,17 @@ class FourDDump {
               $value = '0000/00/00 00:00:00';
             }
             break;
+          case 'double':
+            // Make sure the number is a float
+            $value = floatval($value);
+            break;
+          case 'mediumtext':
+            // Make sure all text fields are UTF-8
+            $value = utf8_encode($value);
+            break;
         }
 
-        $numeric_values = array('int', 'bool');
+        $numeric_values = array('int', 'bool', 'double');
         if(in_array($column->type, $numeric_values)) {
           $values[] = sprintf("%d", $value);
         }
