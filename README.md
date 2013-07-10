@@ -6,7 +6,7 @@ of the 4D SQL implementation, some columns are inaccessible and therefore
 the data is skipped.
 
 Copyright 2013 Fine Arts Museums of San Francisco
-by Brad Erickson <eosrei@gmail.com>
+by Brad Erickson <eosrei at gmail.com>
 
 Requires PDO_4D PHP extension: http://www.php.net/manual/en/ref.pdo-4d.php
 
