@@ -48,7 +48,6 @@ Known Issues
 
 Install
 -------
-
 1. Install PHP
 2. Compile/enable the PDO_4D extension (see directions below)
 3. Clone this script
@@ -86,3 +85,13 @@ Tested on Linux Mint and Ubuntu 12.04LTS
     sudo apache2ctl restart
     # Check for PDO_4D in the PHP CLI Information
     php -i | grep 4D
+
+Todo
+----
+1. A 'test' option to list all problem tables/columns
+2. An 'include binary' option to dump picture/blob data
+3. Output the warnings/notices via stderr instead of PHP's trigger_error
+4. Export 4D foreign key constraints
+5. Add comments to tables describing missing columns.
+6. Add comments to columns describing foreign keys.
+7. Rewrite the whole thing in C! (Probably not)

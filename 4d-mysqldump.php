@@ -9,9 +9,7 @@
  * The PDO_4D PHP extension is required: http://www.php.net/manual/en/ref.pdo-4d.php
  *
  * @todo Load h/u/p from ~/.4d.conf
- * @todo Add -t option to specify tables to export
  * @todo Implement Foreign Keys.
- * @todo Check 4D bool values, and flip as needed
  * @todo Correct all notices to status report comments.
  * @todo Support automatic Subtable relationships if possible.
  * @see http://doc.4d.com/4D-Language-Reference-12.4/Subrecords/Get-subrecord-key.301-977448.en.html
@@ -30,7 +28,14 @@ function help() {
   print '' . PHP_EOL;
   print 'Dumps structure and contents of 4D databases and tables to MySQL.' . PHP_EOL;
   print 'Usage: 4d-mysqldump -hHostname -uUsername -pPassword [-rRetries] [-tTableName] [-l]' . PHP_EOL;
-  // @todo: Document options
+  print 'Options:' . PHP_EOL;
+  print '  -h    Hostname' . PHP_EOL;
+  print '  -u    Username' . PHP_EOL;
+  print '  -p    Password' . PHP_EOL;
+  print '  -r    Number of connection attempt tries (default 3)' . PHP_EOL;
+  print '  -t    Specific table to dump (used internally)' . PHP_EOL;
+  print '  -l    List all tables and exit' . PHP_EOL;
+
   print '' . PHP_EOL;
 }
 
@@ -75,7 +80,7 @@ if (isset($options['t'])) {
 
 // @todo: Run SQL query -s
 // @todo: Limit/Offset
-// @todo: Test database, look for problems. Change -t?
+// @todo: Test database, look for problems. Change -t and use -i for that.
 
 $fourd_dump = new FourDDump($options['h'], $options['u'], $options['p'], $retries, $select_table, $list_tables);
 
