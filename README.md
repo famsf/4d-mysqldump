@@ -15,14 +15,14 @@ Usage
 
     ./4d-mysqldump.php -hHostname -uUsername -pPassword [-rRetries] [-tTable] [-l] [-b]
 
-Options:
-  -h    Hostname
-  -u    Username
-  -p    Password
-  -r    Number of connection attempt tries (default 3)
-  -t    Specific table to dump (used internally)
-  -l    List all tables and exit
-  -b    Include blob/picture binary fields (not implemented yet)
+    Options:
+      -h    Hostname
+      -u    Username
+      -p    Password
+      -r    Number of connection attempt tries (default 3)
+      -t    Specific table to dump (used internally)
+      -l    List all tables and exit
+      -b    Include blob/picture binary fields (not implemented yet)
 
 Known Issues
 ------------
