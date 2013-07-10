@@ -1,4 +1,20 @@
 <?php
+/**
+ * 4d-mysqldump: 4D Database Dump to MySQL
+ * Copyright (C) 2013 Fine Arts Museums of San Francisco
+ * Authored by Brad Erickson <eosrei at gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
 // 4D column data type definitions.
 // @todo: Fill in missing information.
 define('FOURD_DATA_BOOL', 1);
@@ -43,8 +59,9 @@ class FourDDump {
       exit();
     }
 
+    // If select table is not set, process all tables.
     if(is_null($select_table)) {
-      // Process all tables
+      //
       foreach($this->fourd->getTables($select_table) as $fourd_table) {
         passthru($_SERVER['PHP_SELF'] . ' -h'. $hostname . ' -u' . $username . ' -p' . $password . ' -r' . $retries . ' -t' . $fourd_table['TABLE_NAME']);
       }
@@ -68,7 +85,7 @@ class FourDDump {
 
   function parseTable($fourd_table) {
     $table = new stdClass();
-    // @todo: Mark table as temporary
+    // @todo: Mark table as temporary in a comment
 
     // Store the table id/name
     $table->id = $fourd_table['TABLE_ID'];
@@ -138,6 +155,7 @@ class FourDDump {
     // Store original name for select statement to ignore dropped tables.
     $column->original_name = $fourd_column['COLUMN_NAME'];
 
+    // Convert 4D column type to MySQL column type.
     switch($fourd_column['DATA_TYPE']) {
       case FOURD_DATA_BOOL: //id:1
         $column->type = 'bool';

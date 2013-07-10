@@ -1,5 +1,22 @@
 <?php
+/**
+ * 4d-mysqldump: 4D Database Dump to MySQL
+ * Copyright (C) 2013 Fine Arts Museums of San Francisco
+ * Authored by Brad Erickson <eosrei at gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
 
+// Maximum number of columns to use in a single select statement; reduces
+// query string overall length.
 define("FOURD_SQL_COLUMN_LIMIT", 30);
 
 /**

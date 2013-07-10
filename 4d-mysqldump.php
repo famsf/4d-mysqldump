@@ -1,9 +1,19 @@
 #!/usr/bin/php
 <?
 /**
- * 4D Database Dump to MySQL
- * Copyright 2013 Fine Arts Museums of San Francisco
- * by Brad Erickson <eosrei at gmail.com>
+ * 4d-mysqldump: 4D Database Dump to MySQL
+ * Copyright (C) 2013 Fine Arts Museums of San Francisco
+ * Authored by Brad Erickson <eosrei at gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
  * Command line script to dump a 4D database to a compliant MySQL dump file.
  * The PDO_4D PHP extension is required: http://www.php.net/manual/en/ref.pdo-4d.php
@@ -25,9 +35,10 @@ include_once "FourDDump.php";
 function help() {
   print '4d-mysqldump V1.0' . PHP_EOL;
   print 'Copyright 2013 Fine Arts Museums of San Francisco. Created by Brad Erickson.' . PHP_EOL;
-  print '' . PHP_EOL;
+  print PHP_EOL;
   print 'Dumps structure and contents of 4D databases and tables to MySQL.' . PHP_EOL;
   print 'Usage: 4d-mysqldump -hHostname -uUsername -pPassword [-rRetries] [-tTableName] [-l]' . PHP_EOL;
+  print PHP_EOL;
   print 'Options:' . PHP_EOL;
   print '  -h    Hostname' . PHP_EOL;
   print '  -u    Username' . PHP_EOL;

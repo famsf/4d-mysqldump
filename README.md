@@ -61,7 +61,7 @@ Tested on Linux Mint and Ubuntu 12.04LTS
     # Install dependencies (You may need more)
     sudo apt-get install php5-dev
     # Get most recent copy of the code
-    svn checkout http://svn.php.net/repository/pecl/pdo_4d/trunk pdo_4d   
+    svn checkout http://svn.php.net/repository/pecl/pdo_4d/trunk pdo_4d
     cd pdo_4d
     # Prepare the PHP extension for compiling
     phpize
