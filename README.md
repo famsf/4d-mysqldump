@@ -15,24 +15,25 @@ Note: This was created and tested with 4D V11.4 and Ubuntu 12.04LTS YMMV.
 Usage
 -----
 
-4d-mysqldump.php [OPTIONS]
-  -H, --help          Display this help and exit.
-  -h, --host=name     4D server hostname or IP (required.)
-  -u, --user=name     4D username (required.)
-  -p, --password=password
-                      4D password (required.)
-  -r, --retries=count Number of connection attempt retries (default 3, for a
-                      total of 4.)
-  -i, --test          Print information about the database and exit. UNIMPLEMENTED
-  -t, --table=name    Dumps a specific table instead of all tables.
-  -b, --ignore-binary Ignore picture/blob columns. They contain binary data
-                      which may significantly increase the export size, but may
-                      not be needed.
-  -s, --skip-structure
-                      Only print data, don't print table structure.
-  -o, --offset=count  The offset to use during the export.
-  -c, --limit=count   The limit to use during the export.
-  -l, --list          List all tables and exit.
+    4d-mysqldump.php [OPTIONS]
+      -H, --help          Display this help and exit.
+      -h, --host=name     4D server hostname or IP (required.)
+      -u, --user=name     4D username (required.)
+      -p, --password=password
+                          4D password (required.)
+      -r, --retries=count Number of connection attempt retries (default 3, for a
+                          total of 4.)
+      -i, --test          Print information about the database and exit. UNIMPLEMENTED
+      -t, --table=name    Dumps a specific table instead of all tables.
+      -b, --ignore-binary Ignore picture/blob columns. They contain binary data
+                          which may significantly increase the export size, but may
+                          not be needed.
+      -s, --skip-structure
+                          Only print data, don't print table structure.
+      -o, --offset=count  The offset to use during the export.
+      -c, --limit=count   The limit to use during the export.
+      -l, --list          List all tables and exit.
+
 
 Known Issues
 ------------
