@@ -44,12 +44,14 @@ class FourDDump {
   private $fourd;
   private $retries;
   private $select_table;
+  private $skip_structure;
 
   function __construct($opt) {
     $this->select_table = $opt['table'];
+    $this->skip_structure = $opt['skip-structure'];
 
     // Create the 4d DB connection.
-    $this->fourd = new FourD($opt['host'], $opt['user'], $opt['password'], $opt['retries']);
+    $this->fourd = new FourD($opt);
 
     if($opt['list']) {
       foreach($this->fourd->getTables($this->select_table) as $fourd_table) {
@@ -69,14 +71,33 @@ class FourDDump {
             $table->name, E_USER_NOTICE);
         }
         else {
-          $this->dumpTableStructure($table);
+          // Print table structures if skip-structure is false.
+          if(!$this->skip_structure) {
+            $this->dumpTableStructure($table);
+          }
           $this->dumpTableData($table);
         }
       }
     }
     else {
+      // Create a string of all arguments to pass to a new thread.
+      $args = '';
+      foreach($opt as $key => $value) {
+        // If value isn't FALSE, then add the argument to the list.
+        if($value !== FALSE) {
+          // Add all booleans
+          if($value === TRUE) {
+            $args .= ' --' . $key;
+          }
+          // Add all string values.
+          else {
+            $args .= ' --' . $key . '=' . $value;
+          }          
+        }
+      }
+      // Call 4d-mysqldump.php for each table separately.
       foreach($this->fourd->getTables($this->select_table) as $fourd_table) {
-        passthru($_SERVER['PHP_SELF'] . ' -h'. $opt['host'] . ' -u' . $opt['user'] . ' -p' . $opt['password'] . ' -r' . $opt['retries'] . ' -t' . $fourd_table['TABLE_NAME']);
+        passthru($_SERVER['PHP_SELF'] . $args . ' --table=' . $fourd_table['TABLE_NAME']);
       }
     }
   }

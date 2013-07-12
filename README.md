@@ -15,16 +15,24 @@ Note: This was created and tested with 4D V11.4 and Ubuntu 12.04LTS YMMV.
 Usage
 -----
 
-    ./4d-mysqldump.php -hHostname -uUsername -pPassword [-rRetries] [-tTable] [-l] [-b]
-
-    Options:
-      -h    Hostname
-      -u    Username
-      -p    Password
-      -r    Number of connection attempt tries (default 3)
-      -t    Specific table to dump (used internally)
-      -l    List all tables and exit
-      -b    Include blob/picture binary fields (not implemented yet)
+4d-mysqldump.php [OPTIONS]
+  -H, --help          Display this help and exit.
+  -h, --host=name     4D server hostname or IP (required.)
+  -u, --user=name     4D username (required.)
+  -p, --password=password
+                      4D password (required.)
+  -r, --retries=count Number of connection attempt retries (default 3, for a
+                      total of 4.)
+  -i, --test          Print information about the database and exit. UNIMPLEMENTED
+  -t, --table=name    Dumps a specific table instead of all tables.
+  -b, --ignore-binary Ignore picture/blob columns. They generally contain
+                      binary data which significantly increases the export size,
+                      but may not be needed. UNIMPLEMENTED
+  -s, --skip-structure
+                      Only print data, don't print table structure.
+  -o, --offset=count  The offset to use during the export.
+  -c, --limit=count   The limit to use during the export.
+  -l, --list          List all tables and exit.
 
 Known Issues
 ------------
@@ -90,14 +98,14 @@ Tested on Linux Mint and Ubuntu 12.04LTS
 
 Todo
 ----
-1. A 'test' option to list all problem tables/columns.
-2. An 'include binary' option to dump picture/blob data.
-3. Output the warnings/notices via stderr instead of PHP's trigger_error.
-4. Export 4D foreign key constraints for 4D Subtables.
-5. Add comments to tables describing missing columns.
-6. Add comments to columns describing foreign keys.
-7. Load h/u/p from ~/.4d.conf.
-8. Error for missing extension.
-9. Allow queries to be run?
-10. Include default values for columns.
-11. Rewrite the whole thing in C! (Probably not)
+* A 'test' option to list all problem tables/columns.
+* Output the warnings/notices via stderr instead of PHP's trigger_error.
+* Export 4D foreign key constraints for 4D Subtables.
+* Add comments to tables describing missing columns.
+* Add comments to columns describing foreign keys.
+* Load h/u/p from ~/.4d.conf.
+* Error for missing php 4d extension.
+* Allow queries to be run?
+* Include default values for columns.
+* Fix parseopt() to handle multi-value arrays and prioritize argument order.
+* Rewrite the whole thing in C! (Probably not)

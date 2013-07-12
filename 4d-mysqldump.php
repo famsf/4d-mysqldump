@@ -49,9 +49,9 @@ Usage: 4d-mysqldump.php [OPTIONS]
                       binary data which significantly increases the export size,
                       but may not be needed. UNIMPLEMENTED
   -s, --skip-structure
-                      Only print data, don't print table structure. UNIMPLEMENTED
-  -o, --offset=count  The offset to use during the export. UNIMPLEMENTED
-  -c, --limit=count   The limit to use during the export. UNIMPLEMENTED
+                      Only print data, don't print table structure.
+  -o, --offset=count  The offset to use during the export.
+  -c, --limit=count   The limit to use during the export.
   -l, --list          List all tables and exit.
 
 EOD;
@@ -196,7 +196,7 @@ function parseopt($options) {
       $opt[$long] = FALSE;
     }
   }
-  //var_dump($opt);
+  //var_dump($opt);exit();
   // Return the cleaned up array
   return $opt;
 }

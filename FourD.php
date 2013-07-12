@@ -26,31 +26,29 @@ define("FOURD_SQL_COLUMN_LIMIT", 30);
  * @todo Fix SQL injections.
  */
 class FourD {
-  private $hostname;
-  private $username;
-  private $password;
+  // Stores the 4d connection
   private $db;
+  // Stores the in process 4D table query statements
   private $statements;
-  private $retries;
+  // Count of total connection attempts
   private $total_attempts;
+  // Stores the passed opt array with command line arguments.
+  private $opt;
 
-  function __construct($hostname, $username, $password, $retries) {
-    $this->hostname = $hostname;
-    $this->username = $username;
-    $this->password = $password;
-    $this->retries = $retries;
+  function __construct($opt) {
+    $this->opt = $opt;
 
-    $dsn = '4D:host=' . $this->hostname . ';charset=UTF-8';
+    $dsn = '4D:host=' . $this->opt['host'] . ';charset=UTF-8';
     $connected = FALSE;
     $attempts = 0;
-    // Try to connect multiple times.
+    // Try to connect multiple times. (My 4D won't connect about 1/2 the time.)
     while(!$connected) {
       try {
-        $this->db = new PDO($dsn, $this->username, $this->password);
+        $this->db = new PDO($dsn, $this->opt['user'], $this->opt['password']);
       }
       catch (PDOException $e) {
         // Total allowed attempts = retries plus the intial attempt.
-        if ($attempts > $this->retries) {
+        if ($attempts > $this->opt['retries']) {
 
           trigger_error('4D connection failed, after ' . $attempts . ' attempt(s):' . $e->getMessage(), E_USER_ERROR);
           exit();
@@ -80,6 +78,7 @@ class FourD {
     }
     return $this->query($query);
   }
+
   /**
    * Get the columns in the specified table.
    *
@@ -90,10 +89,18 @@ class FourD {
     $query = "SELECT * FROM _USER_COLUMNS WHERE TABLE_ID=" . $table_id . ";";
     return $this->query($query);
   }
+
+  /**
+   * Get the indexes/keys in the specified table.
+   *
+   * @param string $table_id
+   * @return array Row data
+   */
   function getIndexes($table_id) {
     $query = "SELECT * FROM _USER_INDEXES WHERE TABLE_ID=" . $table_id . ";";
     return $this->query($query);
   }
+
   /**
    * Get the columns in the specified index
    *
@@ -123,10 +130,20 @@ class FourD {
 
     $this->statements = array();
     for($i = 0; $i < count($columns_list); $i++) {
-
+      // Create the column list.
       $columns_print = implode(',', $columns_list[$i]);
-      $query = "SELECT " . $columns_print . " FROM " . $table_name . ";";
-      //$query = "SELECT " . $columns_print . " FROM " . $table_name . " LIMIT 1 OFFSET 108 ;";
+      // Create the query.
+      $query = "SELECT " . $columns_print . " FROM " . $table_name;
+      
+      // If limit is set, add it to the query.
+      if($this->opt['limit']) {
+        $query .= ' LIMIT ' . $this->opt['limit'];
+      }
+      // If offset is set, add it to the query.
+      if($this->opt['offset']) {
+        $query .= ' OFFSET ' . $this->opt['offset'];
+      }
+      $query .= ";";
 
       $this->statements[$i] = $this->db->prepare($query);
       $this->statements[$i]->execute();
