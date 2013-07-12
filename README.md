@@ -10,6 +10,8 @@ by Brad Erickson <eosrei at gmail.com>
 
 Requires PDO_4D PHP extension: http://www.php.net/manual/en/ref.pdo-4d.php
 
+Note: This was created and tested with 4D V11.4 and Ubuntu 12.04LTS YMMV.
+
 Usage
 -----
 
@@ -88,10 +90,13 @@ Tested on Linux Mint and Ubuntu 12.04LTS
 
 Todo
 ----
-1. A 'test' option to list all problem tables/columns
-2. An 'include binary' option to dump picture/blob data
-3. Output the warnings/notices via stderr instead of PHP's trigger_error
-4. Export 4D foreign key constraints
+1. A 'test' option to list all problem tables/columns.
+2. An 'include binary' option to dump picture/blob data.
+3. Output the warnings/notices via stderr instead of PHP's trigger_error.
+4. Export 4D foreign key constraints for 4D Subtables.
 5. Add comments to tables describing missing columns.
 6. Add comments to columns describing foreign keys.
-7. Rewrite the whole thing in C! (Probably not)
+7. Load h/u/p from ~/.4d.conf.
+8. Error for missing extension.
+9. Allow queries to be run?
+9. Rewrite the whole thing in C! (Probably not)

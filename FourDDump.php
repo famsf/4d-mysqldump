@@ -45,30 +45,23 @@ class FourDDump {
   private $retries;
   private $select_table;
 
-  function __construct($hostname, $username, $password, $retries, $select_table = NULL, $list_tables) {
-    $this->retries = $retries;
-    $this->select_table = $select_table;
+  function __construct($opt) {
+    $this->select_table = $opt['table'];
 
     // Create the 4d DB connection.
-    $this->fourd = new FourD($hostname, $username, $password, $this->retries);
+    $this->fourd = new FourD($opt['host'], $opt['user'], $opt['password'], $opt['retries']);
 
-    if($list_tables) {
-      foreach($this->fourd->getTables($select_table) as $fourd_table) {
+    if($opt['list']) {
+      foreach($this->fourd->getTables($this->select_table) as $fourd_table) {
         print($fourd_table['TABLE_NAME'] . PHP_EOL);
       }
       exit();
     }
 
-    // If select table is not set, process all tables.
-    if(is_null($select_table)) {
-      //
-      foreach($this->fourd->getTables($select_table) as $fourd_table) {
-        passthru($_SERVER['PHP_SELF'] . ' -h'. $hostname . ' -u' . $username . ' -p' . $password . ' -r' . $retries . ' -t' . $fourd_table['TABLE_NAME']);
-      }
-    }
-    else {
+    // If select table is set, process the table.
+    if($this->select_table) {
       // Process specified table.
-      foreach($this->fourd->getTables($select_table) as $fourd_table) {
+      foreach($this->fourd->getTables($this->select_table) as $fourd_table) {
         $table = $this->parseTable($fourd_table);
 
         if (count($table->columns) == 0) {
@@ -79,6 +72,11 @@ class FourDDump {
           $this->dumpTableStructure($table);
           $this->dumpTableData($table);
         }
+      }
+    }
+    else {
+      foreach($this->fourd->getTables($this->select_table) as $fourd_table) {
+        passthru($_SERVER['PHP_SELF'] . ' -h'. $opt['host'] . ' -u' . $opt['user'] . ' -p' . $opt['password'] . ' -r' . $opt['retries'] . ' -t' . $fourd_table['TABLE_NAME']);
       }
     }
   }
@@ -191,9 +189,8 @@ class FourDDump {
         }
         break;
       case FOURD_DATA_PICTURE: //id:12
-        trigger_error('Unhandled 4D Data Type Picture for:' .
-            $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
-        return FALSE;
+        $column->type = 'blob';
+        break;
       case FOURD_DATA_SUBTABLE_RELATION: //id:15
         trigger_error('Unhandled 4D Data Type Subtable Relation for:' .
             $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
@@ -203,11 +200,8 @@ class FourDDump {
         $column->type = 'int';
         break;
       case FOURD_DATA_BLOB: //id:18
-        //$column->type = 'blob';
-        //break;
-        trigger_error('Unhandled 4D Data Type Blob for:' .
-            $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
-        return FALSE;
+        $column->type = 'blob';
+        break;
       default:
         // Trigger warning for unknown data types and skip them.
         trigger_error('Unknown 4D Data Type. ID: ' . $fourd_column['DATA_TYPE'] .

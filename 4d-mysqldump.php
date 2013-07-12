@@ -18,10 +18,6 @@
  * Command line script to dump a 4D database to a compliant MySQL dump file.
  * The PDO_4D PHP extension is required: http://www.php.net/manual/en/ref.pdo-4d.php
  *
- * @todo Load h/u/p from ~/.4d.conf
- * @todo Implement Foreign Keys.
- * @todo Correct all notices to status report comments.
- * @todo Support automatic Subtable relationships if possible.
  * @see http://doc.4d.com/4D-Language-Reference-12.4/Subrecords/Get-subrecord-key.301-977448.en.html
  * @see http://doc.4d.com/4D-SQL-Reference-12.1/Using-SQL-in-4D/Principles-for-integrating-4D-and-the-4D-SQL-engine.300-494388.en.html
  */
@@ -29,70 +25,178 @@
 include_once "FourD.php";
 include_once "FourDDump.php";
 
+
 /**
  * Print command line help
  */
 function help() {
-  print '4d-mysqldump V1.0' . PHP_EOL;
-  print 'Copyright 2013 Fine Arts Museums of San Francisco. Created by Brad Erickson.' . PHP_EOL;
-  print PHP_EOL;
-  print 'Dumps structure and contents of 4D databases and tables to MySQL.' . PHP_EOL;
-  print 'Usage: 4d-mysqldump -hHostname -uUsername -pPassword [-rRetries] [-tTableName] [-l]' . PHP_EOL;
-  print PHP_EOL;
-  print 'Options:' . PHP_EOL;
-  print '  -h    Hostname' . PHP_EOL;
-  print '  -u    Username' . PHP_EOL;
-  print '  -p    Password' . PHP_EOL;
-  print '  -r    Number of connection attempt tries (default 3)' . PHP_EOL;
-  print '  -t    Specific table to dump (used internally)' . PHP_EOL;
-  print '  -l    List all tables and exit' . PHP_EOL;
+  print<<<EOD
+4d-mysqldump V1.0
+Copyright 2013 Fine Arts Museums of San Francisco.
+Dumps structure and contents of 4D databases and tables to MySQL.
 
-  print '' . PHP_EOL;
-}
+Usage: 4d-mysqldump.php [OPTIONS]
+  -H, --help          Display this help and exit.
+  -h, --host=name     4D server hostname or IP (required.)
+  -u, --user=name     4D username (required.)
+  -p, --password=password
+                      4D password (required.)
+  -r, --retries=count Number of connection attempt retries (default 3, for a
+                      total of 4.)
+  -i, --test          Print information about the database and exit. UNIMPLEMENTED
+  -t, --table=name    Dumps a specific table instead of all tables.
+  -b, --ignore-binary Ignore picture/blob columns. They generally contain
+                      binary data which significantly increases the export size,
+                      but may not be needed. UNIMPLEMENTED
+  -s, --skip-structure
+                      Only print data, don't print table structure. UNIMPLEMENTED
+  -o, --offset=count  The offset to use during the export. UNIMPLEMENTED
+  -c, --limit=count   The limit to use during the export. UNIMPLEMENTED
+  -l, --list          List all tables and exit.
 
-// Get required command line arguments host, username, password.
-$options = getopt("h:u:p:r::lt::s::");
-
-// Check host option
-if (!isset($options['h'])) {
-  echo "ERROR: host is required." . PHP_EOL . PHP_EOL;
-  help();
+EOD;
   exit();
 }
 
-// Check username option
-if (!isset($options['u'])) {
-  echo "ERROR: username is required." . PHP_EOL . PHP_EOL;
+function print_error($msg) {
+  fwrite(STDERR, $msg . PHP_EOL);
+}
+
+// Create an array of command line options
+$options = array(
+  array(
+    'short'    => 'H',
+    'long'     => 'help',
+    'bool'     => TRUE,
+  ),
+  array(
+    'short'    => 'h',
+    'long'     => 'host',
+    'bool'     => FALSE,
+  ),
+  array(
+    'short'    => 'u',
+    'long'     => 'user',
+    'bool'     => FALSE,
+  ),
+  array(
+    'short'    => 'p',
+    'long'     => 'password',
+    'bool'     => FALSE,
+  ),
+  array(
+    'short'    => 'r',
+    'long'     => 'retries',
+    'bool'     => FALSE,
+  ),
+  array(
+    'short'    => 'i',
+    'long'     => 'test',
+    'bool'     => TRUE,
+  ),
+  array(
+    'short'    => 't',
+    'long'     => 'table',
+    'bool'     => FALSE,
+  ),
+  array(
+    'short'    => 'b',
+    'long'     => 'ignore-binary',
+    'bool'     => TRUE,
+  ),
+  array(
+    'short'    => 's',
+    'long'     => 'skip-structure',
+    'bool'     => TRUE,
+  ),
+  array(
+    'short'    => 'o',
+    'long'     => 'offset',
+    'bool'     => FALSE,
+  ),
+  array(
+    'short'    => 'c',
+    'long'     => 'limit',
+    'bool'     => FALSE,
+  ),
+  array(
+    'short'    => 'l',
+    'long'     => 'list',
+    'bool'     => TRUE,
+  ),
+);
+
+$opts = parseopt($options);
+
+// Check for help
+if ($opts['help']) {
   help();
-  exit();
 }
 
-// Check password option
-if (!isset($options['p'])) {
-  echo "ERROR: password is required." . PHP_EOL . PHP_EOL;
+// Check required options
+if (!$opts['host']) {
+  print_error('ERROR: 4D hostname is required.');
   help();
-  exit();
+}
+if (!$opts['user']) {
+  print_error('ERROR: 4D username is required.');
+  help();
+}
+// Technically it *should* be required, but apparently 4D doesn't check this!
+if (!$opts['password']) {
+  print_error('ERROR: 4D password is required.');
+  help();
 }
 
-// Retry connection # of times. -r (excludes intitial attempt)
-$retries = 3;
-if (isset($options['r'])) {
-  $retries = $options['r'];
+// Set retries default as needed.
+if (!$opts['retries']) {
+  $opts['retries'] = 3;
 }
 
-// List all tables in database
-$list_tables = isset($options['l']) ? TRUE : FALSE;
-
-// Specify table to dump -t (Case must match exactly!)
-$select_table = NULL;
-if (isset($options['t'])) {
-  $select_table = $options['t'];
-}
-
-// @todo: Run SQL query -s
-// @todo: Limit/Offset
-// @todo: Test database, look for problems. Change -t and use -i for that.
-
-$fourd_dump = new FourDDump($options['h'], $options['u'], $options['p'], $retries, $select_table, $list_tables);
+$fourd_dump = new FourDDump($opts);
 
 //Done!
+
+function parseopt($options) {
+  $short_opts = '';
+  $long_opts = array();
+
+  // Build short/long option arrays
+  foreach ($options as $option) {
+    $short_opts .= $option['short'];
+    $long_name = $option['long'];
+
+    // If not boolean collect values. Values are always optional here.
+    if(!$option['bool']) {
+      $short_opts .= '::';
+      $long_name .= '::';
+    }
+    $long_opts[] = $long_name;
+  }
+
+  // Get the options
+  $opt = getopt($short_opts, $long_opts);
+
+  foreach ($options as $option) {
+    $short = $option['short'];
+    $long = $option['long'];
+    // If short is set and long isn't, move short into long values.
+    if (isset($opt[$short]) && !isset($opt[$long])) {
+      // Move the value into the long name.
+      $opt[$long] = $opt[$short];
+    }
+    // Remove the short name either way (if both are set, short is ignored.)
+    unset($opt[$short]);
+    // Make all booleans values exist as real booleans.
+    if ($option['bool']) {
+      $opt[$long] = isset($opt[$long]) ? TRUE : FALSE;
+    }
+    // If not a bool and long is not set, set to FALSE
+    elseif (!isset($opt[$long])) {
+      $opt[$long] = FALSE;
+    }
+  }
+  //var_dump($opt);
+  // Return the cleaned up array
+  return $opt;
+}

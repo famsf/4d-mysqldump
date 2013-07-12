@@ -72,11 +72,11 @@ class FourD {
   }
 
   function getTables($select_table) {
-    if (is_null($select_table)) {
-      $query = "SELECT * FROM _USER_TABLES;";
+    if ($select_table) {
+      $query = "SELECT * FROM _USER_TABLES WHERE TABLE_NAME='" . $select_table . "'";
     }
     else {
-      $query = "SELECT * FROM _USER_TABLES WHERE TABLE_NAME='" . $select_table . "'";
+      $query = "SELECT * FROM _USER_TABLES;";
     }
     return $this->query($query);
   }
