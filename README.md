@@ -99,4 +99,5 @@ Todo
 7. Load h/u/p from ~/.4d.conf.
 8. Error for missing extension.
 9. Allow queries to be run?
-9. Rewrite the whole thing in C! (Probably not)
+10. Include default values for columns.
+11. Rewrite the whole thing in C! (Probably not)

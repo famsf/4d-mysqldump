@@ -189,7 +189,7 @@ class FourDDump {
         }
         break;
       case FOURD_DATA_PICTURE: //id:12
-        $column->type = 'blob';
+        $column->type = 'mediumblob';
         break;
       case FOURD_DATA_SUBTABLE_RELATION: //id:15
         trigger_error('Unhandled 4D Data Type Subtable Relation for:' .
@@ -200,7 +200,7 @@ class FourDDump {
         $column->type = 'int';
         break;
       case FOURD_DATA_BLOB: //id:18
-        $column->type = 'blob';
+        $column->type = 'mediumblob';
         break;
       default:
         // Trigger warning for unknown data types and skip them.
