@@ -45,9 +45,9 @@ Usage: 4d-mysqldump.php [OPTIONS]
                       total of 4.)
   -i, --test          Print information about the database and exit. UNIMPLEMENTED
   -t, --table=name    Dumps a specific table instead of all tables.
-  -b, --ignore-binary Ignore picture/blob columns. They generally contain
-                      binary data which significantly increases the export size,
-                      but may not be needed. UNIMPLEMENTED
+  -b, --ignore-binary Ignore picture/blob columns. They contain binary data
+                      which may significantly increase the export size, but may
+                      not be needed.
   -s, --skip-structure
                       Only print data, don't print table structure.
   -o, --offset=count  The offset to use during the export.

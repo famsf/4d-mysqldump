@@ -25,9 +25,9 @@ Usage
                       total of 4.)
   -i, --test          Print information about the database and exit. UNIMPLEMENTED
   -t, --table=name    Dumps a specific table instead of all tables.
-  -b, --ignore-binary Ignore picture/blob columns. They generally contain
-                      binary data which significantly increases the export size,
-                      but may not be needed. UNIMPLEMENTED
+  -b, --ignore-binary Ignore picture/blob columns. They contain binary data
+                      which may significantly increase the export size, but may
+                      not be needed.
   -s, --skip-structure
                       Only print data, don't print table structure.
   -o, --offset=count  The offset to use during the export.
@@ -48,10 +48,6 @@ Known Issues
   therefore ignored/dropped. Fix the column names before exporting.
 * Columns named using SQL reserved words cannot be retrieved from 4D via SQL
   and are therefore ignored/dropped. Fix the column names before exporting.
-* Columns of binary type Picture are not handled and are therefore ignored/
-  dropped. This may be corrected in the future.
-* Columns of binary type Blob are not handled and are therefore ignored/
-  dropped. This may be corrected in the future.
 * Columns of type Subtable Relation when manually created cannot return useful
   information via SQL and are therefore dropped/ignored. The automatically
   created Subtable Relation fields are exported correctly.
@@ -100,12 +96,13 @@ Todo
 ----
 * A 'test' option to list all problem tables/columns.
 * Output the warnings/notices via stderr instead of PHP's trigger_error.
-* Export 4D foreign key constraints for 4D Subtables.
+* Export 4D foreign key constraints.
 * Add comments to tables describing missing columns.
 * Add comments to columns describing foreign keys.
 * Load h/u/p from ~/.4d.conf.
 * Error for missing php 4d extension.
-* Allow queries to be run?
-* Include default values for columns.
+* Allow queries to be run (maybe.)
+* Include default values for columns in SQL.
 * Fix parseopt() to handle multi-value arrays and prioritize argument order.
+* Add all missing data types.
 * Rewrite the whole thing in C! (Probably not)

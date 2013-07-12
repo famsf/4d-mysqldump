@@ -16,7 +16,6 @@
  */
 
 // 4D column data type definitions.
-// @todo: Fill in missing information.
 define('FOURD_DATA_BOOL', 1);
 //define('FOURD_DATA_', 2);
 define('FOURD_DATA_INT_16', 3);
@@ -42,28 +41,25 @@ define('FOURD_FALSE', 1);
 
 class FourDDump {
   private $fourd;
-  private $retries;
-  private $select_table;
-  private $skip_structure;
+  private $opt;
 
   function __construct($opt) {
-    $this->select_table = $opt['table'];
-    $this->skip_structure = $opt['skip-structure'];
+    $this->opt = $opt;
 
     // Create the 4d DB connection.
     $this->fourd = new FourD($opt);
 
     if($opt['list']) {
-      foreach($this->fourd->getTables($this->select_table) as $fourd_table) {
+      foreach($this->fourd->getTables() as $fourd_table) {
         print($fourd_table['TABLE_NAME'] . PHP_EOL);
       }
       exit();
     }
 
     // If select table is set, process the table.
-    if($this->select_table) {
+    if($this->opt['table']) {
       // Process specified table.
-      foreach($this->fourd->getTables($this->select_table) as $fourd_table) {
+      foreach($this->fourd->getTables($this->opt['table']) as $fourd_table) {
         $table = $this->parseTable($fourd_table);
 
         if (count($table->columns) == 0) {
@@ -72,7 +68,7 @@ class FourDDump {
         }
         else {
           // Print table structures if skip-structure is false.
-          if(!$this->skip_structure) {
+          if(!$this->opt['skip-structure']) {
             $this->dumpTableStructure($table);
           }
           $this->dumpTableData($table);
@@ -92,11 +88,11 @@ class FourDDump {
           // Add all string values.
           else {
             $args .= ' --' . $key . '=' . $value;
-          }          
+          }
         }
       }
       // Call 4d-mysqldump.php for each table separately.
-      foreach($this->fourd->getTables($this->select_table) as $fourd_table) {
+      foreach($this->fourd->getTables() as $fourd_table) {
         passthru($_SERVER['PHP_SELF'] . $args . ' --table=' . $fourd_table['TABLE_NAME']);
       }
     }
@@ -210,6 +206,11 @@ class FourDDump {
         }
         break;
       case FOURD_DATA_PICTURE: //id:12
+        // If ignore-binary is true, then skip this column.
+        if ($this->opt['ignore-binary']) {
+          // @todo Add a counter, results, or comment.
+          return FALSE;
+        }
         $column->type = 'mediumblob';
         break;
       case FOURD_DATA_SUBTABLE_RELATION: //id:15
@@ -221,6 +222,11 @@ class FourDDump {
         $column->type = 'int';
         break;
       case FOURD_DATA_BLOB: //id:18
+        // If ignore-binary is true, then skip this column.
+        if ($this->opt['ignore-binary']) {
+          // @todo Add a counter, results, or comment.
+          return FALSE;
+        }
         $column->type = 'mediumblob';
         break;
       default:
@@ -276,7 +282,6 @@ class FourDDump {
 
     return $index;
   }
-
 
   /**
    * Parses and prints table structure definitions.

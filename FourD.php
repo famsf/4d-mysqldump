@@ -69,7 +69,7 @@ class FourD {
     return $statement->fetchAll(PDO::FETCH_ASSOC);
   }
 
-  function getTables($select_table) {
+  function getTables($select_table = FALSE) {
     if ($select_table) {
       $query = "SELECT * FROM _USER_TABLES WHERE TABLE_NAME='" . $select_table . "'";
     }
@@ -134,7 +134,7 @@ class FourD {
       $columns_print = implode(',', $columns_list[$i]);
       // Create the query.
       $query = "SELECT " . $columns_print . " FROM " . $table_name;
-      
+
       // If limit is set, add it to the query.
       if($this->opt['limit']) {
         $query .= ' LIMIT ' . $this->opt['limit'];
