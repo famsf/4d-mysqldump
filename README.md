@@ -10,7 +10,8 @@ by Brad Erickson <eosrei at gmail.com>
 
 Requires PDO_4D PHP extension: http://www.php.net/manual/en/ref.pdo-4d.php
 
-Note: This was created and tested with 4D V11.4 and Ubuntu 12.04LTS YMMV.
+Note: This was created and tested with 4D V11.4 and Ubuntu 12.04LTS YMMV. 
+A 3.7GB SQL file was sucessful exported from 4D and imported to MySQL.
 
 Usage
 -----
