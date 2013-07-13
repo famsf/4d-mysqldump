@@ -64,7 +64,7 @@ Install
 
 Compile/enable PDO_4D
 -----------------------------------------
-Tested on Linux Mint and Ubuntu 12.04LTS
+Tested on Linux Mint with PHP 5.4.6 and Ubuntu 12.04LTS with PHP 5.3.10
 
     # Install dependencies (You may need more)
     sudo apt-get install php5-dev
@@ -85,10 +85,12 @@ Tested on Linux Mint and Ubuntu 12.04LTS
     make
     # Copy the extension to PHP's library
     sudo make install
-    # Create php5 module configuration file
+    # Create php5 module configuration file (PHP 5.4)
     sudo sh -c "echo extension=pdo_4d.so > /etc/php5/mods-available/pdo_4d.ini"
-    # Enable the module
+    # Enable the module (PHP 5.4)
     sudo php5enmod pdo_4d
+    # Enable the module (PHP 5.3)
+    sudo sh -c "echo extension=pdo_4d.so > /etc/php5/conf.d/pdo_4d.ini"
     # Restart apache
     sudo apache2ctl restart
     # Check for PDO_4D in the PHP CLI Information
