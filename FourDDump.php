@@ -154,18 +154,6 @@ class FourDDump {
     // Converting all column names to lowercase because 4D allows duplicate
     // column names and we need unique names.
     $column->name = strtolower($fourd_column['COLUMN_NAME']);
-    // If column name is a SQL reserved word, drop/ignore table.
-    if ($column->name == 'group') {
-      trigger_error('Invalid 4D column name (SQL Reserved):' .
-        $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
-      return FALSE;
-    }
-    // If column name contains a space, drop/ignore table.
-    if (strpos($column->name, ' ') !== FALSE) {
-      trigger_error('Invalid 4D column name (Contains spaces):' .
-        $fourd_column['COLUMN_NAME'], E_USER_NOTICE);
-      return FALSE;
-    }
 
     // Store original name for select statement to ignore dropped tables.
     $column->original_name = $fourd_column['COLUMN_NAME'];
@@ -385,10 +373,6 @@ class FourDDump {
           case 'double':
             // Make sure the number is a float
             $value = floatval($value);
-            break;
-          case 'mediumtext':
-            // Make sure all text fields are UTF-8
-            $value = utf8_encode($value);
             break;
         }
 

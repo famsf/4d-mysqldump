@@ -46,10 +46,6 @@ Known Issues
   Example: A table with 75 columns including binary data in 150k rows, requires
   4GB+ of ram. Long term solution is fixing the 4D library or rewriting to not
   use it.
-* Columns with spaces in the names cannot be retrieved from 4D via SQL and are
-  therefore ignored/dropped. Fix the column names before exporting.
-* Columns named using SQL reserved words cannot be retrieved from 4D via SQL
-  and are therefore ignored/dropped. Fix the column names before exporting.
 * Columns of type Subtable Relation when manually created cannot return useful
   information via SQL and are therefore dropped/ignored. The automatically
   created Subtable Relation fields are exported correctly.

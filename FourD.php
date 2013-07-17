@@ -113,6 +113,11 @@ class FourD {
   }
 
   function startSelect($table_name, $column_names = array()) {
+    // Add brackets around every column name to allow spaces and sql reserved
+    // words as column names.
+    foreach ($column_names as &$column) {
+      $column = '[' . $column . ']';
+    }
     // Break the column_name array into an array of arrays with max length of
     // FOURD_SQL_COLUMN_LIMIT. Long statements segfault the PDO 4D extension.
     $columns_list = array_chunk($column_names, FOURD_SQL_COLUMN_LIMIT);
