@@ -124,6 +124,12 @@ $options = array(
     'long'     => 'list',
     'bool'     => TRUE,
   ),
+  // Internal use only to manage threads to avoid excessive memory use.
+  array(
+    'short'    => 'z',
+    'long'     => 'internal-thread',
+    'bool'     => TRUE,
+  ),
 );
 
 $opts = parseopt($options);

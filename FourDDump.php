@@ -39,6 +39,14 @@ define('FOURD_DATA_BLOB', 18);
 define('FOURD_TRUE', 0);
 define('FOURD_FALSE', 1);
 
+// Maximum amount of ram dumpTableData() can use. Uses the memory_limit value
+// set in php.ini or this value if php.in is set to -1.
+define('FOURD_MAX_MEMORY_MB', '512M');
+
+// A file to store the last processed table row in. Will only exist on program
+// exit when there has been a crash.
+define('FOURD_TEMP_FILENAME', '4dmd-last-row.tmp');
+
 class FourDDump {
   private $fourd;
   private $opt;
@@ -53,11 +61,12 @@ class FourDDump {
       foreach($this->fourd->getTables() as $fourd_table) {
         print($fourd_table['TABLE_NAME'] . PHP_EOL);
       }
-      exit();
+      exit(0);
     }
 
-    // If select table is set, process the table.
-    if($this->opt['table']) {
+    // If this is an internal/managed thread and a table is specified, process
+    // the table.
+    if ($this->opt['internal-thread'] && $this->opt['table']) {
       // Process specified table.
       foreach($this->fourd->getTables($this->opt['table']) as $fourd_table) {
         $table = $this->parseTable($fourd_table);
@@ -76,26 +85,78 @@ class FourDDump {
       }
     }
     else {
-      // Create a string of all arguments to pass to a new thread.
-      $args = '';
-      foreach($opt as $key => $value) {
-        // If value isn't FALSE, then add the argument to the list.
-        if($value !== FALSE) {
-          // Add all booleans
-          if($value === TRUE) {
-            $args .= ' --' . $key;
-          }
-          // Add all string values.
-          else {
-            $args .= ' --' . $key . '=' . $value;
-          }
-        }
+      //  Set internal thread to true.
+      $this->opt['internal-thread'] = TRUE;
+
+      // If table is specified, process the table.
+      if($this->opt['table']) {
+        $this->newThreads();
+        exit(0);
       }
+      // Otherwise process all tables.
       // Call 4d-mysqldump.php for each table separately.
       foreach($this->fourd->getTables() as $fourd_table) {
-        passthru($_SERVER['PHP_SELF'] . $args . ' --table=' . $fourd_table['TABLE_NAME']);
+        $this->newThreads($fourd_table['TABLE_NAME']);
+        exit(0);
       }
     }
+  }
+
+  // Create a string of all arguments to pass to a new thread.
+  private function renderArgs() {
+    $args = '';
+    foreach($this->opt as $key => $value) {
+      // If value isn't FALSE, then add the argument to the list.
+      if($value !== FALSE) {
+        // Add all booleans
+        if($value === TRUE) {
+          $args .= ' --' . $key;
+        }
+        // Add all string values.
+        else {
+          $args .= ' --' . $key . '=' . $value;
+        }
+      }
+    }
+    return $args;
+  }
+
+  private function newThreads($table_name = NULL) {
+    // If tablename is specified, add it to the args. Otherwise it should
+    // already exist.
+    if ($table_name) {
+      $this->opt['table'] = $table_name;
+    }
+
+    // If the temp file exists, clear it.
+    if (file_exists(FOURD_TEMP_FILENAME)) {
+      unlink(FOURD_TEMP_FILENAME);
+    }
+
+    //$start_offset = $this->opt['offset'];
+    $new_offset = 0;
+    // Make new threads while the exit code isn't zero.
+    do {
+      $this->opt['offset'] = $this->opt['offset'] + $new_offset;
+      passthru($_SERVER['PHP_SELF'] . $this->renderArgs());
+
+      if ($file_last_row = fopen(FOURD_TEMP_FILENAME, "r")) {
+        $data_last_row = fread($file_last_row, filesize(FOURD_TEMP_FILENAME));
+        fclose($file_last_row);
+        $new_offset = intval($data_last_row);
+        // Delete the temp file
+        unlink(FOURD_TEMP_FILENAME);
+      }
+      else {
+        // Exit, something is wrong.
+        trigger_error('Row result file is missing.');
+        break;
+      }
+
+      // Only print the table structure once.
+      $this->opt['skip-structure'] = TRUE;
+    } while ($new_offset != 0);
+
   }
 
   function parseTable($fourd_table) {
@@ -350,7 +411,20 @@ class FourDDump {
     printf(PHP_EOL . 'LOCK TABLES `%s` WRITE;', $table->name);
     print(PHP_EOL . 'set autocommit=0;');
 
+    // Get the memory limit set in the php.ini
+    $ini_memory_limit = ini_get('memory_limit');
+    // If memory use is unlimited (as it often is for CLI), set to the default.
+    if ($ini_memory_limit == '-1') {
+      $ini_memory_limit = FOURD_MAX_MEMORY_MB;
+    }
+    // Convert ini_memory_limit to an INT value in bytes.
+    $memory_limit = intval($ini_memory_limit) * pow(1024, 2);
+    // Cut 5% off as a buffer (should be enough)
+    $memory_limit = round($memory_limit * .95);
+
     // Loop through each row and column
+    $count = 0;
+    $out_of_memory = FALSE;
     while ($row = $this->fourd->getRow()) {
       $values = array();
       foreach ($table->columns as $column) {
@@ -387,11 +461,37 @@ class FourDDump {
       // Put a comma after every line except for the last.
       $print_values = implode(',', $values);
       printf(PHP_EOL . 'INSERT INTO `%s` VALUES (%s);', $table->name, $print_values);
+      // Count the number of successful rows
+      $count++;
+
+      // If current memory is with 5% of the memory limit, exit.
+      if (memory_get_usage(TRUE) > $memory_limit) {
+        trigger_error('Thread memory limit reached at row:' . ($this->opt['offset'] + $count));
+        $out_of_memory = TRUE;
+        break;
+      }
     }
 
     print(PHP_EOL . 'UNLOCK TABLES;');
     print(PHP_EOL . 'commit;');
     print(PHP_EOL);
+
+
+    if ($file_last_row = fopen(FOURD_TEMP_FILENAME, 'w')) {
+      // If the dump ended early due to memory use, provide an exit code.
+      if ($out_of_memory) {
+        // Record the number of sucessfully printed rows.
+        fwrite($file_last_row, $count);
+      }
+      else {
+        // Otherwise print a 0 for a bash-style sucess.
+        fwrite($file_last_row, '0');
+      }
+      fclose($file_last_row);
+    }
+    else {
+      trigger_error('Row result file cannot be openned.', E_USER_ERROR);
+    }
   }
 
 }

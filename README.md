@@ -10,7 +10,7 @@ by Brad Erickson <eosrei at gmail.com>
 
 Requires PDO_4D PHP extension: http://www.php.net/manual/en/ref.pdo-4d.php
 
-Note: This was created and tested with 4D V11.4 and Ubuntu 12.04LTS YMMV. 
+Note: This was created and tested with 4D V11.4 and Ubuntu 12.04LTS YMMV.
 A 3.7GB SQL file was sucessful exported from 4D and imported to MySQL.
 
 Usage
@@ -41,11 +41,9 @@ Known Issues
 *READ THIS!*
 
 * The 4D library used by the PDO_4D PHP extension has a severe memory leak.
-  Each table is automatically dumped with a new PHP process to reduce max
-  memory requirements, but significant amounts of ram can still be required.
-  Example: A table with 75 columns including binary data in 150k rows, requires
-  4GB+ of ram. Long term solution is fixing the 4D library or rewriting to not
-  use it.
+  The workaround used in this is a new thread for every table and whenever the
+  memory use hits a predetermined limit. The long term solution is fixing the
+  4D library or rewriting to not use it.
 * Columns of type Subtable Relation when manually created cannot return useful
   information via SQL and are therefore dropped/ignored. The automatically
   created Subtable Relation fields are exported correctly.
@@ -105,4 +103,5 @@ Todo
 * Include default values for columns in SQL.
 * Fix parseopt() to handle multi-value arrays and prioritize argument order.
 * Add all missing data types.
+* Thread Manager really should be a different class.
 * Rewrite the whole thing in C! (Probably not)
