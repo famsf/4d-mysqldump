@@ -139,22 +139,17 @@ class FourDDump {
     do {
       $this->opt['offset'] = $this->opt['offset'] + $new_offset;
       passthru($_SERVER['PHP_SELF'] . $this->renderArgs());
+      // Only print the table structure once.
+      $this->opt['skip-structure'] = TRUE;
 
-      if ($file_last_row = fopen(FOURD_TEMP_FILENAME, "r")) {
+      if (file_exists(FOURD_TEMP_FILENAME) && $file_last_row = fopen(FOURD_TEMP_FILENAME, "r")) {
         $data_last_row = fread($file_last_row, filesize(FOURD_TEMP_FILENAME));
         fclose($file_last_row);
         $new_offset = intval($data_last_row);
         // Delete the temp file
         unlink(FOURD_TEMP_FILENAME);
       }
-      else {
-        // Exit, something is wrong.
-        trigger_error('Row result file is missing.');
-        break;
-      }
 
-      // Only print the table structure once.
-      $this->opt['skip-structure'] = TRUE;
     } while ($new_offset != 0);
 
   }
