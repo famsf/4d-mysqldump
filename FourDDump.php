@@ -436,7 +436,7 @@ class FourDDump {
             }
             // Otherwise, return an empty value. This will drop years >10000.
             else {
-              $value = '0000/00/00 00:00:00';
+              $value = '0000-00-00 00:00:00';
             }
             break;
           case 'double':
