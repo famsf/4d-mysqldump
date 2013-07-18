@@ -96,9 +96,9 @@ class FourDDump {
       // Otherwise process all tables.
       // Call 4d-mysqldump.php for each table separately.
       foreach($this->fourd->getTables() as $fourd_table) {
-        $this->newThreads($fourd_table['TABLE_NAME']);
-        exit(0);
+        $this->newThreads($fourd_table['TABLE_NAME']);        
       }
+      exit(0);
     }
   }
 
