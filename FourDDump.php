@@ -209,7 +209,13 @@ class FourDDump {
     $column->id = $fourd_column['COLUMN_ID'];
     // Converting all column names to lowercase because 4D allows duplicate
     // column names and we need unique names.
-    $column->name = strtolower($fourd_column['COLUMN_NAME']);
+    // @todo: Consider checking for duplicates
+    $column_name = strtolower($fourd_column['COLUMN_NAME']);
+    // Optionally strip all whitespace and invalid characters, defaults to TRUE.
+    if (!$this->opt['allow-spaces']) {
+      $column_name = preg_replace('/[^A-Za-z0-9_.]+/', '', $column_name);
+    }
+    $column->name = $column_name;
 
     // Store original name for select statement to ignore dropped tables.
     $column->original_name = $fourd_column['COLUMN_NAME'];
@@ -437,6 +443,7 @@ class FourDDump {
             // Otherwise, return an empty value. This will drop years >10000.
             else {
               $value = '0000-00-00 00:00:00';
+              // @todo: Should this be null?
             }
             break;
           case 'double':
