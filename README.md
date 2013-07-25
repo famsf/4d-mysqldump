@@ -24,7 +24,7 @@ Usage
                           4D password (required.)
       -r, --retries=count Number of connection attempt retries (default 3, for a
                           total of 4.)
-      -i, --test          Print information about the database and exit. UNIMPLEMENTED
+      -l, --list          List all tables and exit.
       -t, --table=name    Dumps a specific table instead of all tables.
       -b, --ignore-binary Ignore picture/blob columns. They contain binary data
                           which may significantly increase the export size, but may
@@ -33,7 +33,7 @@ Usage
                           Only print data, don't print table structure.
       -o, --offset=count  The offset to use during the export.
       -c, --limit=count   The limit to use during the export.
-      -l, --list          List all tables and exit.
+      -w, --allow-spaces  Don't removed spaces from column names.
 
 
 Known Issues
