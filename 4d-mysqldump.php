@@ -1,5 +1,5 @@
-#!/usr/bin/php
-<?
+#!/usr/bin/env php
+<?php
 /**
  * 4d-mysqldump: 4D Database Dump to MySQL
  * Copyright (C) 2013 Fine Arts Museums of San Francisco
