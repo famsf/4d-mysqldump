@@ -58,32 +58,29 @@ Install
 
 Compile/enable PDO_4D
 -----------------------------------------
-Tested on Linux Mint with PHP 5.4.6 and Ubuntu 12.04LTS with PHP 5.3.10
+Tested on Ubuntu 12.04/14.04 with PHP 5.3.10/5.4.6/5.5.9
 
     # Install dependencies (You may need more)
     sudo apt-get install php5-dev
-    # Get most recent copy of the code
-    svn checkout http://svn.php.net/repository/pecl/pdo_4d/trunk pdo_4d
+    # Clone a working version of the code from the FAMSF repo
+    git clone https://github.com/famsf/pecl-pdo-4d.git pdo_4d
     cd pdo_4d
     # Prepare the PHP extension for compiling
     phpize
-    # Fix problem with generated configure pointing to incorrect header location.
-    # See: https://bugs.php.net/bug.php?id=63902
-    sed -i -e 's/php\//php5\//g' configure
+    # Workaround acinclude.m4 pointing to incorrect header location.
+    # See: https://bugs.launchpad.net/ubuntu/+source/php5/+bug/1393640
+    sudo ln -s /usr/include/php5/ /usr/include/php
     # Configure the package to the system
     ./configure --with-pdo-4d
-    # Copy fourd.h to the main directory. Note: This is not the correct way to
-    # fix this problem, but it works to get the extension compiled.
-    cp lib4d_sql/fourd.h .
     # Compile!
     make
     # Copy the extension to PHP's library
     sudo make install
-    # Create php5 module configuration file (PHP 5.4)
+    # Create php5 module configuration file for PHP 5.4/5.5
     sudo sh -c "echo extension=pdo_4d.so > /etc/php5/mods-available/pdo_4d.ini"
-    # Enable the module (PHP 5.4)
+    # Enable the module for PHP 5.4/5.5
     sudo php5enmod pdo_4d
-    # Enable the module (PHP 5.3)
+    # Enable the module for PHP 5.3
     sudo sh -c "echo extension=pdo_4d.so > /etc/php5/conf.d/pdo_4d.ini"
     # Restart apache
     sudo apache2ctl restart
