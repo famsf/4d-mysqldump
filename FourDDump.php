@@ -457,7 +457,7 @@ class FourDDump {
           $values[] = sprintf("%d", $value);
         }
         else {
-          $values[] = sprintf("'%s'", mysql_real_escape_string($value));
+          $values[] = sprintf("'%s'", addslashes($value));
         }
       }
       // Put a comma after every line except for the last.
